@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/kiera/**)",
+      "Bash(npx create-next-app@16.2.3 formattr-tmp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
