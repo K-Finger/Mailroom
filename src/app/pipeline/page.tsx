@@ -1,9 +1,9 @@
-import { PipelineForm } from "./pipeline-form";
+import { Pipeline } from "@/components/pipeline/Pipeline";
 
 export default function PipelinePage() {
   return (
-    <div className="p-6">
-      <PipelineForm />
+    <div className="min-h-screen p-8">
+      <Pipeline />
     </div>
   );
 }

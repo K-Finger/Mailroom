@@ -16,12 +16,13 @@ export async function POST(request: Request) {
 
   const userId = user?.id ?? "00000000-0000-0000-0000-000000000000";
 
-  const { inputPaths, inputNames, instructionText, instructionPath } =
+  const { inputPaths, inputNames, instructionText, instructionPath, nativePdf } =
     await request.json() as {
       inputPaths: string[];
       inputNames: string[];
       instructionText?: string;
       instructionPath?: string;
+      nativePdf?: boolean;
     };
 
   if (!inputPaths?.length) {
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
       },
-      body: JSON.stringify({ jobId: job.id }),
+      body: JSON.stringify({ jobId: job.id, nativePdf: nativePdf ?? false }),
     });
   });
 

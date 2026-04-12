@@ -48,15 +48,28 @@ async function spreadsheetToText(bytes: Uint8Array, name: string): Promise<strin
 async function fileContentBlock(
   bytes: Uint8Array,
   name: string,
+  nativePdf = false,
 ): Promise<Anthropic.MessageParam["content"][number]> {
   const lower = name.toLowerCase();
 
   if (lower.endsWith(".pdf")) {
-    const b64 = btoa(String.fromCharCode(...bytes));
-    return {
-      type: "document",
-      source: { type: "base64", media_type: "application/pdf", data: b64 },
-    } as unknown as Anthropic.MessageParam["content"][number];
+    if (nativePdf) {
+      let binary = "";
+      const chunkSize = 8192;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+      }
+      const b64 = btoa(binary);
+      return {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: b64 },
+      } as unknown as Anthropic.MessageParam["content"][number];
+    }
+
+    // Default: extract text first (cheaper, faster)
+    const { extractText } = await import("npm:unpdf");
+    const { text } = await extractText(bytes);
+    return { type: "text", text: `### File: ${name}\n\n${text}` };
   }
 
   const isSpreadsheet =
@@ -90,7 +103,7 @@ async function rowsToXlsx(
 // ---------------------------------------------------------------------------
 
 Deno.serve(async (req) => {
-  const { jobId } = await req.json() as { jobId: string };
+  const { jobId, nativePdf = false } = await req.json() as { jobId: string; nativePdf?: boolean };
 
   await supabase.from("jobs").update({ status: "processing" }).eq("id", jobId);
 
@@ -112,7 +125,7 @@ Deno.serve(async (req) => {
         type: "text",
         text: "The following file is the OUTPUT TEMPLATE. Your response must match this structure exactly — same column names, same data types.",
       });
-      content.push(await fileContentBlock(bytes, baseName));
+      content.push(await fileContentBlock(bytes, baseName, nativePdf));
     }
 
     if (job.instruction_text) {
@@ -125,7 +138,7 @@ Deno.serve(async (req) => {
     });
     for (let i = 0; i < job.input_paths.length; i++) {
       const bytes = await downloadFile(job.input_paths[i], "source-files");
-      content.push(await fileContentBlock(bytes, job.input_names[i] ?? `file_${i}`));
+      content.push(await fileContentBlock(bytes, job.input_names[i] ?? `file_${i}`, nativePdf));
     }
 
     content.push({
@@ -141,7 +154,9 @@ Deno.serve(async (req) => {
 
 Rules:
 - Column names must exactly match the template (or be reasonable if no template given)
-- Include every row of data found — do not summarise or truncate
+- Include EVERY record as its own row — never deduplicate, even if rows appear identical
+- If a value or section repeats across pages or documents, still include it as a separate row
+- Do not summarise, truncate, merge, or skip any records
 - Use null for missing values
 - Return only the JSON object, no markdown fences`,
     });
