@@ -21,6 +21,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No input files" }, { status: 400 });
   }
 
+  if (process.env.BILLING_ENABLED === "true") {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("stripe_subscription_status")
+      .eq("id", user.id)
+      .single();
+    const status = profile?.stripe_subscription_status;
+    if (status !== "active" && status !== "trialing") {
+      return NextResponse.json({ error: "Active subscription required" }, { status: 402 });
+    }
+  }
+
   const { data: job, error } = await supabase
     .from("jobs")
     .insert({
@@ -38,7 +50,7 @@ export async function POST(request: Request) {
   }
 
   after(async () => {
-    await fetch(EDGE_FUNCTION_URL, {
+    const res = await fetch(EDGE_FUNCTION_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,6 +58,16 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({ jobId: job.id }),
     });
+    if (!res.ok) {
+      const serviceClient = (await import("@supabase/supabase-js")).createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      );
+      await serviceClient
+        .from("jobs")
+        .update({ status: "error", error_message: "Failed to start processing" })
+        .eq("id", job.id);
+    }
   });
 
   return NextResponse.json({ jobId: job.id });

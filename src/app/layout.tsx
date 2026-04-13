@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Formattr",
+  title: "Mailroom",
   description: "Turn messy files into clean spreadsheets",
 };
 

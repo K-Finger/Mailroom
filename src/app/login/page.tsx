@@ -11,7 +11,7 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Formattr</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Mailroom</h1>
         <p className="text-sm text-muted-foreground">Document workflow automation</p>
       </div>
 

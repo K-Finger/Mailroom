@@ -1,7 +1,7 @@
 "use client";
 
-import { Download, Loader2 } from "lucide-react";
-import { useReactFlow, useNodes, useEdges } from "@xyflow/react";
+import { Download, Loader2, AlertTriangle } from "lucide-react";
+import { useReactFlow, useNodes, useEdges, type Edge } from "@xyflow/react";
 import {
   usePipelineStore,
   INITIAL_NODES,
@@ -21,13 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 /** Walk backwards from nodeId to compute the shape arriving at it. */
 function useIncomingShape(nodeId: string): DataShape {
   const nodes = useNodes<PipelineNode>();
-  const edges = useEdges();
-  const reverseMap = new Map(edges.map((e) => [e.target, e.source]));
+  const edges = useEdges<Edge>();
+  const reverseMap = new Map<string, string>(edges.map((e) => [e.target, e.source]));
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
-  // Build ordered path from source → nodeId (exclusive)
   const path: string[] = [];
-  let cur: string | undefined = nodeId;
+  let cur: string = nodeId;
   while (cur) {
     const prev = reverseMap.get(cur);
     if (!prev || prev === "source") break;
@@ -70,7 +69,6 @@ export function OutputStatus({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {/* Format picker — only when idle and upstream produces table data */}
       {step === "idle" && isTable && (
         <div className="flex items-center gap-2 w-full">
           <label className="text-xs text-muted-foreground shrink-0">Format</label>
@@ -81,7 +79,7 @@ export function OutputStatus({ id }: { id: string }) {
             }
           >
             <SelectTrigger size="sm" className="flex-1 text-xs h-7">
-              <SelectValue>{(v: string) => v.toUpperCase()}</SelectValue>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="xlsx">XLSX</SelectItem>
@@ -109,7 +107,10 @@ export function OutputStatus({ id }: { id: string }) {
         </a>
       )}
       {step === "error" && (
-        <p className="text-xs text-destructive">{error ?? "Failed"}</p>
+        <div className="flex items-start gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-2 py-1.5 w-full">
+          <AlertTriangle className="size-3 text-destructive shrink-0 mt-0.5" />
+          <p className="text-xs text-destructive leading-snug">{error ?? "Processing failed"}</p>
+        </div>
       )}
       {(step === "done" || step === "error") && (
         <button

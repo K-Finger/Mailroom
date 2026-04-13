@@ -6,7 +6,7 @@ import { addEdge, type Node, type Edge, type Connection } from "@xyflow/react";
 // ---------------------------------------------------------------------------
 
 export type DataShape = "files" | "texts" | "table";
-export type StepType = "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator";
+export type StepType = "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator" | "google-sheets" | "filter" | "email";
 
 export type ValidationCheck =
   | "required"
@@ -17,6 +17,23 @@ export type ValidationCheck =
   | "regex"
   | "no-duplicates"
   | "sum-equals";
+
+export type FilterOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "greater_than"
+  | "less_than"
+  | "is_empty"
+  | "is_not_empty";
+
+export interface FilterRule {
+  id: string;
+  field: string;
+  operator: FilterOperator;
+  value: string;
+}
 
 export interface ValidationRule {
   id: string;
@@ -35,12 +52,22 @@ export interface PipelineStep {
     templatePath?: string;
     fileType?: string;
     outputFormat?: "csv" | "text";
-    /** Output steps only — identifies which node produced this result in result_paths[]. */
+    /** Output + google-sheets steps — identifies which node produced this result in result_paths[]. */
     nodeId?: string;
     /** Output steps only — format for table data. */
     tableFormat?: "xlsx" | "csv";
+    /** Google Sheets steps only */
+    sheetId?: string;
+    sheetTab?: string;
     /** Validator steps only */
     rules?: ValidationRule[];
+    /** Filter steps only */
+    filterRules?: FilterRule[];
+    /** Email steps only */
+    emailTo?: string;
+    emailSubject?: string;
+    emailBody?: string;
+    emailFormat?: "xlsx" | "csv";
   };
 }
 
@@ -55,7 +82,10 @@ export const STEP_IO: Record<StepType, { accepts: DataShape[]; produces: DataSha
   extract: { accepts: ["files", "texts"], produces: "table" },
   "csv-parser": { accepts: ["files", "texts"], produces: "table" },
   validator: { accepts: ["table"], produces: "table" },
+  filter: { accepts: ["table"], produces: "table" },
+  "google-sheets": { accepts: ["table"], produces: "table" }, // appends then passes through
   output: { accepts: ["files", "texts", "table"], produces: "files" }, // produces=placeholder
+  email: { accepts: ["files", "texts", "table"], produces: "files" }, // produces=placeholder (pass-through)
 };
 
 // ---------------------------------------------------------------------------
@@ -71,7 +101,7 @@ export interface PipelineFile {
   thumbnail?: string; // base64 data URL for PDF first-page preview
 }
 
-export type InstructionType = "extract" | "csv-parser" | "extract-text" | "merge" | "output" | "validator";
+export type InstructionType = StepType;
 
 export type InstructionPayload =
   | { type: "extract"; text: string; file: PipelineFile | null; outputFormat: "csv" | "text" }
@@ -79,7 +109,10 @@ export type InstructionPayload =
   | { type: "extract-text" }
   | { type: "merge"; fileType: "pdf" }
   | { type: "output"; tableFormat: "xlsx" | "csv" }
-  | { type: "validator"; rules: ValidationRule[] };
+  | { type: "validator"; rules: ValidationRule[] }
+  | { type: "google-sheets"; sheetId: string | null; sheetTab: string; sheetName: string }
+  | { type: "filter"; rules: FilterRule[] }
+  | { type: "email"; to: string; subject: string; body: string; format: "xlsx" | "csv" };
 
 export interface SourceNodeData extends Record<string, unknown> {
   kind: "source";
@@ -111,6 +144,9 @@ export function defaultPayload(type: InstructionType): InstructionPayload {
   if (type === "extract-text") return { type: "extract-text" };
   if (type === "merge") return { type: "merge", fileType: "pdf" };
   if (type === "validator") return { type: "validator", rules: [] };
+  if (type === "google-sheets") return { type: "google-sheets", sheetId: null, sheetTab: "Sheet1", sheetName: "" };
+  if (type === "filter") return { type: "filter", rules: [] };
+  if (type === "email") return { type: "email", to: "", subject: "Pipeline results", body: "", format: "xlsx" };
   return { type: "output", tableFormat: "xlsx" };
 }
 
@@ -123,7 +159,7 @@ export function producedShape(
   payload?: InstructionPayload,
   currentShape: DataShape = "files",
 ): DataShape {
-  if (type === "output") return currentShape;
+  if (type === "output" || type === "email") return currentShape;
   if (type === "extract") {
     const p = payload as Extract<InstructionPayload, { type: "extract" }> | undefined;
     if (p?.outputFormat === "text") return "texts";
@@ -171,7 +207,7 @@ export { addEdge, type Connection };
 interface PipelineState {
   step: ProcessingStep;
   jobId: string | null;
-  results: Record<string, string>; // nodeId → signed URL
+  results: Record<string, string>; // nodeId → signed URL or sheet URL
   error: string | null;
   setStep: (step: ProcessingStep) => void;
   setJobId: (id: string | null) => void;

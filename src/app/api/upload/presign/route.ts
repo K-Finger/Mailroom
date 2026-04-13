@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         .createSignedUploadUrl(path);
 
       if (error) throw new Error(error.message);
-      return { name: f.name, path, signedUrl: data.signedUrl, token: data.token };
+      return { name: f.name, path, token: data.token };
     })
   );
 

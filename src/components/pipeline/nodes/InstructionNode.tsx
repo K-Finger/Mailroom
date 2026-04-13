@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { X, ChevronDown, ChevronUp, Sparkles, Table2, FileText, Download, Layers, ShieldCheck } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Sparkles, Table2, FileText, Download, Layers, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import { CsvParserForm } from "./CsvParserForm";
 import { MergeForm } from "./MergeForm";
 import { OutputStatus } from "./OutputStatus";
 import { ValidatorForm } from "./ValidatorForm";
+import { GoogleSheetsForm } from "./GoogleSheetsForm";
+import { FilterForm } from "./FilterForm";
+import { EmailForm } from "./EmailForm";
 
 const TYPE_META: Record<InstructionType, {
   icon: React.ElementType;
@@ -23,12 +26,15 @@ const TYPE_META: Record<InstructionType, {
   collapsible: boolean;
   hasContent: boolean;
 }> = {
-  extract:        { icon: Sparkles,      label: "AI Extract",   collapsible: true,  hasContent: true  },
-  "csv-parser":   { icon: Table2,        label: "CSV Parser",   collapsible: true,  hasContent: true  },
-  "extract-text": { icon: FileText,      label: "Text Extract", collapsible: false, hasContent: false },
-  merge:          { icon: Layers,        label: "Merge",        collapsible: true,  hasContent: true  },
-  output:         { icon: Download,      label: "Output",       collapsible: false, hasContent: true  },
-  validator:      { icon: ShieldCheck,   label: "Validator",    collapsible: true,  hasContent: true  },
+  extract:          { icon: Sparkles,    label: "AI Extract",      collapsible: true,  hasContent: true  },
+  "csv-parser":     { icon: Table2,      label: "CSV Parser",      collapsible: true,  hasContent: true  },
+  "extract-text":   { icon: FileText,    label: "Text Extract",    collapsible: false, hasContent: false },
+  merge:            { icon: Layers,      label: "Merge",           collapsible: true,  hasContent: true  },
+  output:           { icon: Download,    label: "Output",          collapsible: false, hasContent: true  },
+  validator:        { icon: ShieldCheck, label: "Validator",       collapsible: true,  hasContent: true  },
+  "google-sheets":  { icon: Sheet,       label: "Google Sheets",   collapsible: true,  hasContent: true  },
+  filter:           { icon: Filter,      label: "Filter",          collapsible: true,  hasContent: true  },
+  email:            { icon: Mail,        label: "Email",           collapsible: true,  hasContent: true  },
 };
 
 /** Dynamic width for extract nodes — grows with prompt text length. */
@@ -93,10 +99,13 @@ export function InstructionNode({ id, data }: NodeProps<PipelineNode>) {
         {collapsible && hasContent && (
           <CollapsibleContent>
             <div className="border-t border-border px-4 py-4 nodrag nopan">
-              {d.instructionType === "extract"     && <ExtractForm id={id} data={d} />}
-              {d.instructionType === "csv-parser"  && <CsvParserForm id={id} data={d} />}
-              {d.instructionType === "merge"       && <MergeForm id={id} data={d} />}
-              {d.instructionType === "validator"   && <ValidatorForm id={id} data={d} />}
+              {d.instructionType === "extract"        && <ExtractForm id={id} data={d} />}
+              {d.instructionType === "csv-parser"     && <CsvParserForm id={id} data={d} />}
+              {d.instructionType === "merge"          && <MergeForm id={id} data={d} />}
+              {d.instructionType === "validator"      && <ValidatorForm id={id} data={d} />}
+              {d.instructionType === "google-sheets"  && <GoogleSheetsForm id={id} data={d} />}
+              {d.instructionType === "filter"         && <FilterForm id={id} data={d} />}
+              {d.instructionType === "email"          && <EmailForm id={id} data={d} />}
             </div>
           </CollapsibleContent>
         )}

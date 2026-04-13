@@ -1,11 +1,12 @@
 "use client";
 
 import { X, FolderOpen } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { toast } from "sonner";
 import { usePipelineStore, type PipelineFile, type SourceNodeData, type PipelineNode } from "@/store/pipeline";
 import { Button } from "@/components/ui/button";
+import { loadPickerApi, openFolderPicker, listFolderFiles, downloadDriveFile } from "@/lib/google-drive/picker";
 import {
   FileUpload,
   FileUploadDropzone,
@@ -24,30 +25,56 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
   const { inputFiles } = data as SourceNodeData;
   const busy = step === "uploading" || step === "processing";
   const files = inputFiles.map((f) => f.file);
+  const [driveLoading, setDriveLoading] = useState(false);
 
   const handleChange = useCallback(
     async (next: File[]) => {
-      const pipelineFiles: PipelineFile[] = await Promise.all(
-        next.map(async (f): Promise<PipelineFile> => {
-          // Reuse existing entry if already processed
-          const existing = inputFiles.find((pf) => pf.file === f);
-          if (existing) return existing;
+      // Process sequentially so only one PDF is decoded in memory at a time
+      const pipelineFiles: PipelineFile[] = [];
+      for (const f of next) {
+        const existing = inputFiles.find((pf) => pf.file === f);
+        if (existing) { pipelineFiles.push(existing); continue; }
 
-          let thumbnail: string | undefined;
-          if (f.name.toLowerCase().endsWith(".pdf")) {
-            try {
-              thumbnail = await pdfThumbnail(f);
-            } catch {
-              // silently fall back to no thumbnail
-            }
-          }
-          return { id: crypto.randomUUID(), file: f, name: f.name, thumbnail };
-        })
-      );
+        let thumbnail: string | undefined;
+        if (f.name.toLowerCase().endsWith(".pdf")) {
+          try { thumbnail = await pdfThumbnail(f); } catch { /* fall back to no thumbnail */ }
+        }
+        pipelineFiles.push({ id: crypto.randomUUID(), file: f, name: f.name, thumbnail });
+      }
       updateNodeData(id, { inputFiles: pipelineFiles });
     },
     [id, updateNodeData, inputFiles]
   );
+
+  const handleDrivePick = useCallback(async () => {
+    setDriveLoading(true);
+    try {
+      const tokenRes = await fetch("/api/google-drive/token");
+      if (!tokenRes.ok) {
+        const { error } = await tokenRes.json() as { error: string };
+        throw new Error(error ?? "No Drive access");
+      }
+      const { token } = await tokenRes.json() as { token: string };
+
+      await loadPickerApi();
+      const folder = await openFolderPicker(token);
+      if (!folder) return;
+
+      const driveFiles = await listFolderFiles(folder.id, token);
+      if (!driveFiles.length) {
+        toast.error("No supported files in that folder", { description: "Supports PDF, XLSX, XLS, CSV" });
+        return;
+      }
+
+      const downloaded = await Promise.all(driveFiles.map((f) => downloadDriveFile(f, token)));
+      await handleChange([...files, ...downloaded]);
+      toast.success(`Added ${downloaded.length} file${downloaded.length !== 1 ? "s" : ""} from "${folder.name}"`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load Drive files");
+    } finally {
+      setDriveLoading(false);
+    }
+  }, [files, handleChange]);
 
   const onFileReject = useCallback((file: File, message: string) => {
     toast.error(message, { description: `"${file.name}" was rejected` });
@@ -81,6 +108,22 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
               </FileUploadTrigger>
             </div>
           </FileUploadDropzone>
+          <button
+            type="button"
+            onClick={handleDrivePick}
+            disabled={busy || driveLoading}
+            className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            <svg viewBox="0 0 87.3 78" className="size-3 shrink-0" aria-hidden="true">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L38 30H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA" />
+              <path d="M43.65 25L29.35 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 25.5C.4 26.9 0 28.45 0 30h38z" fill="#00AC47" />
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H49.3l8.1 15.6z" fill="#EA4335" />
+              <path d="M43.65 25L57.95 0c-1.35-.8-2.85-1.2-4.4-1.2H33.8c-1.55 0-3.05.45-4.4 1.25z" fill="#00832D" />
+              <path d="M87.3 30H49.3L43.65 25 29.35 0c-.05 0-.05.05-.1.05L6.6 66.85l16.15.05L49.3 30z" fill="#2684FC" />
+              <path d="M73.4 30L57.95 0l-.05.05-14.3 25H87.3c0-1.55-.4-3.1-1.2-4.5z" fill="#FFBA00" />
+            </svg>
+            {driveLoading ? "Loading..." : "Google Drive"}
+          </button>
           <FileUploadList className="mt-2">
             {inputFiles.map((pf) => (
               <FileUploadItem key={pf.id} value={pf.file}>

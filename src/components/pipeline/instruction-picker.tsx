@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Table2, FileText, Download, Plus, Layers, ShieldCheck } from "lucide-react";
+import { Sparkles, Table2, FileText, Download, Plus, Layers, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { InstructionType } from "@/store/pipeline";
@@ -42,6 +42,24 @@ export const INSTRUCTION_TYPES: { id: InstructionType; icon: React.ElementType; 
     icon: ShieldCheck,
     label: "Validator",
     description: "Check table rows against rules — required fields, numeric ranges, totals",
+  },
+  {
+    id: "google-sheets",
+    icon: Sheet,
+    label: "Google Sheets",
+    description: "Append table rows to an existing Google Sheet",
+  },
+  {
+    id: "filter",
+    icon: Filter,
+    label: "Filter",
+    description: "Keep only rows that match all conditions",
+  },
+  {
+    id: "email",
+    icon: Mail,
+    label: "Email",
+    description: "Send results as an email attachment",
   },
 ];
 

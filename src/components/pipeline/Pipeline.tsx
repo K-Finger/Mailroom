@@ -1,23 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
   BackgroundVariant,
+  Panel,
   useNodesState,
   useEdgesState,
   addEdge,
   type NodeTypes,
   type OnConnect,
+  type OnNodesChange,
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/auth/actions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -88,28 +91,34 @@ function validatePipeline(nodes: PipelineNode[]): { valid: boolean; error?: stri
   return { valid: true };
 }
 
+const STEP_LABELS: Record<InstructionType, string> = {
+  extract: "AI Extract",
+  "csv-parser": "CSV Parser",
+  "extract-text": "Text Extract",
+  merge: "Merge",
+  output: "Output",
+  validator: "Validator",
+  "google-sheets": "Google Sheets",
+  filter: "Filter",
+  email: "Email",
+};
+
 function getStepLabel(data: InstructionNodeData): string {
   if (data.instructionType === "merge") {
     const p = data.payload as Extract<InstructionPayload, { type: "merge" }>;
     return `Merge (${p.fileType.toUpperCase()})`;
   }
-  const labels: Partial<Record<InstructionType, string>> = {
-    extract: "AI Extract",
-    "csv-parser": "CSV Parser",
-    "extract-text": "Text Extract",
-    output: "Output",
-  };
-  return labels[data.instructionType] ?? data.instructionType;
+  return STEP_LABELS[data.instructionType];
 }
 
 // ---------------------------------------------------------------------------
 // WorkflowPanel
 // ---------------------------------------------------------------------------
 
-const SHAPE_STYLES: Record<DataShape, string> = {
-  files: "bg-muted text-muted-foreground",
-  texts: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  table: "bg-primary/10 text-primary",
+const SHAPE_TEXT: Record<DataShape, string> = {
+  files: "text-muted-foreground",
+  texts: "text-blue-600 dark:text-blue-400",
+  table: "text-primary",
 };
 
 const STEP_ICONS: Record<InstructionType, LucideIcon> = {
@@ -118,13 +127,17 @@ const STEP_ICONS: Record<InstructionType, LucideIcon> = {
   "extract-text": FileText,
   merge: Layers,
   output: Download,
+  validator: ShieldCheck,
+  "google-sheets": Sheet,
+  filter: Filter,
+  email: Mail,
 };
 
 function ShapePill({ shape, error }: { shape: DataShape; error?: boolean }) {
   return (
     <span className={cn(
       "inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[10px] font-medium",
-      error ? "text-destructive" : SHAPE_STYLES[shape].split(" ")[1],
+      error ? "text-destructive" : SHAPE_TEXT[shape],
     )}>
       {shape}
     </span>
@@ -135,31 +148,29 @@ function ShapePill({ shape, error }: { shape: DataShape; error?: boolean }) {
 // Usage / Cost
 // ---------------------------------------------------------------------------
 
-export interface UsageData {
-  /** Account balance in USD. */
-  balance: number;
-  /** Estimated cost of the current workflow run in USD. */
-  estimatedCost: number;
-}
+const MONTHLY_LIMIT = 500;
 
-function fmt(n: number) {
-  return `$${n.toFixed(2)}`;
-}
-
-function UsagePanel({ usage }: { usage: UsageData }) {
+function UsagePanel({ docs }: { docs: number }) {
+  const pct = Math.min(100, Math.round((docs / MONTHLY_LIMIT) * 100));
   return (
-    <div className="border-b px-3 py-3 shrink-0 grid grid-cols-2 gap-2">
-      <div className="flex flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2">
-        <Wallet className="size-3 text-muted-foreground" />
-        <span className="text-sm font-semibold tabular-nums">{fmt(usage.balance)}</span>
-        <span className="text-[10px] text-muted-foreground">Balance</span>
+    <a
+      href="/billing"
+      className="border-b px-3 py-2.5 shrink-0 flex items-center gap-3 hover:bg-accent/50 transition-colors group"
+    >
+      <Zap className="size-3 shrink-0 text-muted-foreground" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] text-muted-foreground">Docs this month</span>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{docs}/{MONTHLY_LIMIT}</span>
+        </div>
+        <div className="h-1 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
       </div>
-      <div className="flex flex-col gap-1 rounded-lg bg-primary/5 px-3 py-2">
-        <Zap className="size-3 text-primary" />
-        <span className="text-sm font-semibold tabular-nums text-primary">{fmt(usage.estimatedCost)}</span>
-        <span className="text-[10px] text-muted-foreground">Est. pipeline cost</span>
-      </div>
-    </div>
+    </a>
   );
 }
 
@@ -177,13 +188,13 @@ function WorkflowPanel({
   edges,
   selectedNodeId,
   onSelectNode,
-  usage,
+  docs,
 }: {
   nodes: PipelineNode[];
   edges: PipelineEdge[];
   selectedNodeId: string | null;
   onSelectNode: (id: string) => void;
-  usage: UsageData;
+  docs: number;
 }) {
   const orderedNodes = getOrderedSteps(nodes, edges);
   const entries: WorkflowEntry[] = [];
@@ -216,7 +227,7 @@ function WorkflowPanel({
 
   return (
     <div className="flex flex-col h-full border-r bg-card">
-      <UsagePanel usage={usage} />
+      <UsagePanel docs={docs} />
       <div className="flex-1 overflow-y-auto px-3 py-4">
         {/* Source */}
         <div className="flex items-center gap-2 px-2 py-1.5">
@@ -298,7 +309,7 @@ function NodeTray({
   disabled: boolean;
   savedPipelines: SavedPipeline[];
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<"add" | "reuse">("add");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [pipelineName, setPipelineName] = useState("");
@@ -310,7 +321,7 @@ function NodeTray({
     setOpen(true);
   };
 
-  const handleSaveSubmit = (e: React.FormEvent) => {
+  const handleSaveSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!pipelineName.trim()) return;
     onSave(pipelineName.trim());
@@ -318,7 +329,7 @@ function NodeTray({
     setSaveDialogOpen(false);
   };
 
-  const handleRenameSubmit = (e: React.FormEvent) => {
+  const handleRenameSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!renaming || !renaming.name.trim()) return;
     onRename(renaming.id, renaming.name.trim());
@@ -459,9 +470,9 @@ function NodeTray({
 // Pipeline
 // ---------------------------------------------------------------------------
 
-export function Pipeline({ user }: { user: User | null }) {
+export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisMonth: number }) {
   const supabase = createClient();
-  const { step, jobId, setStep, setJobId, setResults, setError } = usePipelineStore();
+  const { step, jobId, error, setStep, setJobId, setResults, setError } = usePipelineStore();
   const [savedPipelines, setSavedPipelines] = useState<SavedPipeline[]>([]);
 
   useEffect(() => {
@@ -469,7 +480,7 @@ export function Pipeline({ user }: { user: User | null }) {
       .from("saved_pipelines")
       .select("id, name, created_at")
       .order("created_at", { ascending: false })
-      .then(({ data }) => { if (data) setSavedPipelines(data); });
+      .then(({ data }: { data: SavedPipeline[] | null }) => { if (data) setSavedPipelines(data); });
   }, [supabase]);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -551,14 +562,14 @@ export function Pipeline({ user }: { user: User | null }) {
       return { ...n, data: { ...d, payload } };
     });
 
-    if (!user) { console.error("Not logged in"); return; }
+    if (!user) return;
 
     const { data, error } = await supabase
       .from("saved_pipelines")
       .insert({ name, user_id: user.id, nodes: serialisableNodes, edges })
       .select("id, name, created_at")
       .single();
-    if (error) { console.error("Save failed", error.message, error.details); return; }
+    if (error) { toast.error("Failed to save pipeline"); return; }
     setSavedPipelines((prev) => [data, ...prev]);
   }, [supabase, user, nodes, edges]);
 
@@ -578,7 +589,7 @@ export function Pipeline({ user }: { user: User | null }) {
       .select("nodes, edges")
       .eq("id", pipeline.id)
       .single();
-    if (error || !data) { console.error("Load failed", error); return; }
+    if (error || !data) { toast.error("Failed to load pipeline"); return; }
     setNodes(data.nodes as PipelineNode[]);
     setEdges(data.edges as PipelineEdge[]);
   }, [supabase, setNodes, setEdges]);
@@ -591,6 +602,15 @@ export function Pipeline({ user }: { user: User | null }) {
   );
   const canSubmit = inputFiles.length > 0 && !busy && step !== "done";
 
+  // Toast once when a job transitions to error state
+  const prevStep = useRef(step);
+  useEffect(() => {
+    if (step === "error" && prevStep.current !== "error" && error) {
+      toast.error("Pipeline failed", { description: error });
+    }
+    prevStep.current = step;
+  }, [step, error]);
+
   useEffect(() => {
     if (!jobId || step === "done" || step === "error" || step === "idle") return;
 
@@ -599,7 +619,7 @@ export function Pipeline({ user }: { user: User | null }) {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "jobs", filter: `id=eq.${jobId}` },
-        async (payload) => {
+        async (payload: { new: { status: string; result_paths?: { nodeId: string; path: string }[]; error_message?: string } }) => {
           const job = payload.new as {
             status: string;
             result_paths?: { nodeId: string; path: string }[];
@@ -609,9 +629,16 @@ export function Pipeline({ user }: { user: User | null }) {
             const results: Record<string, string> = {};
             await Promise.all(
               job.result_paths.map(async ({ nodeId, path }) => {
-                const { data, error } = await supabase.storage.from("results").createSignedUrl(path, 60 * 5);
-                if (error) console.error("createSignedUrl failed", path, error);
-                if (data?.signedUrl) results[nodeId] = data.signedUrl;
+                if (path.startsWith("sheets://")) {
+                  const spreadsheetId = path.slice("sheets://".length);
+                  results[nodeId] = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+                } else if (path === "email://sent") {
+                  results[nodeId] = "sent";
+                } else {
+                  const { data, error } = await supabase.storage.from("results").createSignedUrl(path, 60 * 5);
+                  if (error) setError(`Failed to get download URL for result`);
+                  if (data?.signedUrl) results[nodeId] = data.signedUrl;
+                }
               })
             );
             setResults(results);
@@ -692,9 +719,24 @@ export function Pipeline({ user }: { user: User | null }) {
           const payload = data.payload as Extract<InstructionPayload, { type: "output" }>;
           config.nodeId = node.id;
           config.tableFormat = payload.tableFormat;
+        } else if (stepType === "google-sheets") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "google-sheets" }>;
+          config.nodeId = node.id;
+          config.sheetId = payload.sheetId ?? undefined;
+          config.sheetTab = payload.sheetTab;
         } else if (stepType === "validator") {
           const payload = data.payload as Extract<InstructionPayload, { type: "validator" }>;
           config.rules = payload.rules;
+        } else if (stepType === "filter") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "filter" }>;
+          config.filterRules = payload.rules;
+        } else if (stepType === "email") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "email" }>;
+          config.nodeId = node.id;
+          config.emailTo = payload.to;
+          config.emailSubject = payload.subject;
+          config.emailBody = payload.body;
+          config.emailFormat = payload.format;
         }
 
         return { type: stepType, config };
@@ -737,6 +779,10 @@ export function Pipeline({ user }: { user: User | null }) {
               {user?.email ?? "Account"}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => { window.location.href = "/billing"; }}>
+                <Wallet className="size-3.5" />
+                Billing
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut()}>
                 <LogOut className="size-3.5" />
                 Sign out
@@ -755,7 +801,7 @@ export function Pipeline({ user }: { user: User | null }) {
             edges={edges}
             selectedNodeId={selectedNodeId}
             onSelectNode={handleSelectNode}
-            usage={{ balance: 12.40, estimatedCost: 0.03 }}
+            docs={docsThisMonth}
           />
         </div>
 
@@ -767,7 +813,7 @@ export function Pipeline({ user }: { user: User | null }) {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={onNodesChange as OnNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
@@ -789,6 +835,13 @@ export function Pipeline({ user }: { user: User | null }) {
           >
             <Background variant={BackgroundVariant.Dots} gap={16} size={1} className="opacity-30" />
             <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
+            {inputFiles.length === 0 && step === "idle" && (
+              <Panel position="top-center" className="pointer-events-none mt-6">
+                <p className="text-xs text-muted-foreground bg-card/80 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-sm">
+                  Drop files into <strong>Source</strong>, add steps below, then hit <strong>Run</strong>
+                </p>
+              </Panel>
+            )}
           </ReactFlow>
         </div>
 

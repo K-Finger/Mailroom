@@ -5,6 +5,8 @@ import { extractText } from "./handlers/extract-text.ts";
 import { extract } from "./handlers/extract.ts";
 import { csvParser } from "./handlers/csv-parser.ts";
 import { validator } from "./handlers/validator.ts";
+import { filter } from "./handlers/filter.ts";
+import { sendEmail } from "./handlers/email.ts";
 import type { StepData, PipelineStep, StepHandler } from "./types.ts";
 
 const handlers: Record<string, StepHandler> = {
@@ -13,6 +15,7 @@ const handlers: Record<string, StepHandler> = {
   extract,
   "csv-parser": csvParser,
   validator,
+  filter,
 };
 
 Deno.serve(async (req) => {
@@ -42,8 +45,8 @@ Deno.serve(async (req) => {
 
     for (const step of steps) {
       if (step.type === "output") {
-        // Snapshot current data and upload as a result file for this output node
         if (!step.config.nodeId) throw new Error("Output step missing nodeId");
+
         const { bytes, filename, contentType } = await shapeToResult(data, step.config.tableFormat);
         const resultPath = `${job.user_id}/${jobId}/${step.config.nodeId}/${filename}`;
         const { error: uploadError } = await supabase.storage
@@ -52,6 +55,57 @@ Deno.serve(async (req) => {
         if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
         resultPaths.push({ nodeId: step.config.nodeId, path: resultPath });
         continue; // data passes through unchanged
+      }
+
+      if (step.type === "google-sheets") {
+        if (!step.config.nodeId) throw new Error("Google Sheets step missing nodeId");
+        if (!step.config.sheetId) throw new Error("Google Sheets step missing sheetId");
+        if (data.shape !== "table") throw new Error("Google Sheets step requires table data");
+
+        const { data: userData } = await supabase
+          .from("users")
+          .select("google_access_token")
+          .eq("id", job.user_id)
+          .single();
+
+        if (!userData?.google_access_token) {
+          throw new Error("No Google token — sign out and back in to reconnect Drive");
+        }
+
+        const sheetTab = step.config.sheetTab ?? "Sheet1";
+        const values = [
+          data.columns,
+          ...data.rows.map((row) => data.columns.map((col) => row[col] ?? "")),
+        ];
+
+        const sheetsRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${step.config.sheetId}/values/${encodeURIComponent(sheetTab)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${userData.google_access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ values }),
+          },
+        );
+
+        if (!sheetsRes.ok) {
+          const err = await sheetsRes.json() as { error?: { message?: string } };
+          throw new Error(`Sheets API error: ${err.error?.message ?? sheetsRes.status}`);
+        }
+
+        resultPaths.push({ nodeId: step.config.nodeId, path: `sheets://${step.config.sheetId}` });
+        // data passes through unchanged — downstream steps can still use it
+        continue;
+      }
+
+      if (step.type === "email") {
+        if (!step.config.nodeId) throw new Error("Email step missing nodeId");
+        await sendEmail(data, step.config);
+        resultPaths.push({ nodeId: step.config.nodeId, path: "email://sent" });
+        // data passes through unchanged
+        continue;
       }
 
       const handler = handlers[step.type];
@@ -63,6 +117,31 @@ Deno.serve(async (req) => {
     }
 
     await supabase.from("jobs").update({ status: "done", result_paths: resultPaths }).eq("id", jobId);
+
+    // Report usage to Stripe if configured
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const meterName = Deno.env.get("STRIPE_METER_NAME") ?? "documents_processed";
+    if (stripeKey) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("stripe_customer_id")
+        .eq("id", job.user_id)
+        .single();
+      if (userData?.stripe_customer_id) {
+        await fetch("https://api.stripe.com/v1/billing/meter_events", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${stripeKey}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            event_name: meterName,
+            "payload[stripe_customer_id]": userData.stripe_customer_id,
+            "payload[value]": String(job.input_paths.length),
+          }),
+        });
+      }
+    }
 
     // Delete source files, template files, and temp files — results are kept.
     if (cleanup.size > 0) {

@@ -6,18 +6,28 @@ export type StepData =
   | { shape: "table"; columns: string[]; rows: Record<string, unknown>[] };
 
 export interface PipelineStep {
-  type: "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator";
+  type: "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator" | "google-sheets" | "filter" | "email";
   config: {
     prompt?: string;
     templatePath?: string;
     fileType?: string;
     outputFormat?: "csv" | "text";
-    /** Output steps only — identifies which node produced this result in result_paths[]. */
+    /** Output + google-sheets + email steps — identifies which node produced this result in result_paths[]. */
     nodeId?: string;
     /** Output steps only — format for table data. Defaults to xlsx. */
     tableFormat?: "xlsx" | "csv";
+    /** Google Sheets steps only */
+    sheetId?: string;
+    sheetTab?: string;
     /** Validator steps only */
     rules?: unknown[];
+    /** Filter steps only */
+    filterRules?: unknown[];
+    /** Email steps only */
+    emailTo?: string;
+    emailSubject?: string;
+    emailBody?: string;
+    emailFormat?: "xlsx" | "csv";
   };
 }
 
