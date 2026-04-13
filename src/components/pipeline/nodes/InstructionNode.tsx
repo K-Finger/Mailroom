@@ -72,7 +72,7 @@ export function InstructionNode({ id, data }: NodeProps<PipelineNode>) {
   return (
     <Collapsible open={!d.collapsed}>
       <div
-        className="shrink-0 rounded-xl border border-border bg-card shadow-sm transition-[width] duration-150"
+        className="shrink-0 rounded-xl border border-blue-400/50 bg-card shadow-sm transition-[width] duration-150"
         style={{ width }}
       >
         <Handle type="target" position={Position.Left} className="bg-foreground/40! border-0! w-4! h-4!" />

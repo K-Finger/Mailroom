@@ -115,7 +115,12 @@ export async function listFolderFiles(folderId: string, token: string): Promise<
     { headers: { Authorization: `Bearer ${token}` } },
   );
 
-  if (!res.ok) throw new Error("Failed to list Drive folder contents");
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Drive access expired — sign out and sign back in with Google");
+    }
+    throw new Error("Failed to list Drive folder contents");
+  }
   const { files } = await res.json();
   return files ?? [];
 }
