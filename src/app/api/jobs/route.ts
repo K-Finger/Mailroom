@@ -2,34 +2,32 @@ import { after } from "next/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import type { PipelineStep } from "@/store/pipeline";
 
 const EDGE_FUNCTION_URL =
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/process-job`;
+
+// Set AUTH_ENABLED=true in env to enforce authentication.
+const AUTH_ENABLED = process.env.AUTH_ENABLED === "true";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  // TODO: re-enable before launch
-  const AUTH_ENABLED = false;
   if (AUTH_ENABLED && !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = user?.id ?? "00000000-0000-0000-0000-000000000000";
 
-  const { inputPaths, inputNames, instructionText, instructionPath, nativePdf } =
-    await request.json() as {
-      inputPaths: string[];
-      inputNames: string[];
-      instructionText?: string;
-      instructionPath?: string;
-      nativePdf?: boolean;
-    };
+  const { inputPaths, inputNames, pipelineSteps } = await request.json() as {
+    inputPaths: string[];
+    inputNames: string[];
+    pipelineSteps: PipelineStep[];
+  };
 
   if (!inputPaths?.length) {
     return NextResponse.json({ error: "No input files" }, { status: 400 });
   }
 
-  // Bypass RLS when auth is disabled for testing
   const insertClient = AUTH_ENABLED
     ? supabase
     : createServiceClient(
@@ -44,8 +42,7 @@ export async function POST(request: Request) {
       status: "pending",
       input_paths: inputPaths,
       input_names: inputNames,
-      instruction_text: instructionText ?? null,
-      instruction_path: instructionPath ?? null,
+      pipeline_steps: pipelineSteps,
     })
     .select("id")
     .single();
@@ -61,7 +58,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
       },
-      body: JSON.stringify({ jobId: job.id, nativePdf: nativePdf ?? false }),
+      body: JSON.stringify({ jobId: job.id }),
     });
   });
 

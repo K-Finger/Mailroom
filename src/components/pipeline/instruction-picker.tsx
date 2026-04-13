@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Table2, Mic, Download, Plus } from "lucide-react";
+import { Sparkles, Table2, FileText, Download, Plus, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { InstructionType } from "@/store/pipeline";
 
-const INSTRUCTION_TYPES: { id: InstructionType; icon: React.ElementType; label: string; description: string }[] = [
+export const INSTRUCTION_TYPES: { id: InstructionType; icon: React.ElementType; label: string; description: string }[] = [
   {
     id: "extract",
     icon: Sparkles,
@@ -20,10 +20,16 @@ const INSTRUCTION_TYPES: { id: InstructionType; icon: React.ElementType; label: 
     description: "Upload a CSV with {{placeholders}} for fields to extract",
   },
   {
-    id: "transcribe",
-    icon: Mic,
-    label: "Transcribe",
-    description: "Convert audio, video, or scanned files to text",
+    id: "merge",
+    icon: Layers,
+    label: "Merge",
+    description: "Combine files of one type into one before processing",
+  },
+  {
+    id: "extract-text",
+    icon: FileText,
+    label: "Text Extract",
+    description: "Use AI to pull text from files, outputting plain text",
   },
   {
     id: "output",

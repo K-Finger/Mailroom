@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X, FolderOpen } from "lucide-react";
 import { useCallback } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { toast } from "sonner";
@@ -55,8 +55,9 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
 
   return (
     <div className="w-48 rounded-xl border border-border bg-card shadow-sm">
-      <div className="px-4 pt-4 pb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Source</p>
+      <div className="flex items-center gap-2 px-4 py-3">
+        <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="flex-1 text-sm font-semibold">Source</span>
       </div>
       <div className="px-4 pb-4 nodrag nopan">
         <FileUpload
@@ -103,7 +104,7 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
           </FileUploadList>
         </FileUpload>
       </div>
-      <Handle type="source" position={Position.Right} className="bg-foreground/30! border-0! w-3! h-3!" />
+      <Handle type="source" position={Position.Right} className="bg-foreground/40! border-0! w-4! h-4!" />
     </div>
   );
 }

@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
+// Set AUTH_ENABLED=true in env to enforce authentication.
+const AUTH_ENABLED = process.env.AUTH_ENABLED === "true";
+
 export async function POST(request: Request) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  // TODO: re-enable before launch
-  const AUTH_ENABLED = false;
   if (AUTH_ENABLED && !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Use a test user ID when auth is disabled
   const userId = user?.id ?? "00000000-0000-0000-0000-000000000000";
 
   const { files } = await request.json() as {

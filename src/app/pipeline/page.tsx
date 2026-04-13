@@ -2,7 +2,7 @@ import { Pipeline } from "@/components/pipeline/Pipeline";
 
 export default function PipelinePage() {
   return (
-    <div className="min-h-screen p-8">
+    <div className="h-screen overflow-hidden">
       <Pipeline />
     </div>
   );
