@@ -6,7 +6,7 @@ export type StepData =
   | { shape: "table"; columns: string[]; rows: Record<string, unknown>[] };
 
 export interface PipelineStep {
-  type: "extract-text" | "extract" | "csv-parser" | "merge" | "output";
+  type: "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator";
   config: {
     prompt?: string;
     templatePath?: string;
@@ -16,6 +16,8 @@ export interface PipelineStep {
     nodeId?: string;
     /** Output steps only — format for table data. Defaults to xlsx. */
     tableFormat?: "xlsx" | "csv";
+    /** Validator steps only */
+    rules?: unknown[];
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Table2, FileText, Download, Plus, Layers } from "lucide-react";
+import { Sparkles, Table2, FileText, Download, Plus, Layers, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { InstructionType } from "@/store/pipeline";
@@ -36,6 +36,12 @@ export const INSTRUCTION_TYPES: { id: InstructionType; icon: React.ElementType; 
     icon: Download,
     label: "Output",
     description: "Download pipeline data at this point",
+  },
+  {
+    id: "validator",
+    icon: ShieldCheck,
+    label: "Validator",
+    description: "Check table rows against rules — required fields, numeric ranges, totals",
   },
 ];
 

@@ -6,7 +6,27 @@ import { addEdge, type Node, type Edge, type Connection } from "@xyflow/react";
 // ---------------------------------------------------------------------------
 
 export type DataShape = "files" | "texts" | "table";
-export type StepType = "extract-text" | "extract" | "csv-parser" | "merge" | "output";
+export type StepType = "extract-text" | "extract" | "csv-parser" | "merge" | "output" | "validator";
+
+export type ValidationCheck =
+  | "required"
+  | "numeric"
+  | "positive"
+  | "range"
+  | "date"
+  | "regex"
+  | "no-duplicates"
+  | "sum-equals";
+
+export interface ValidationRule {
+  id: string;
+  field: string;
+  check: ValidationCheck;
+  min?: number;
+  max?: number;
+  pattern?: string;
+  sumFields?: string[];
+}
 
 export interface PipelineStep {
   type: StepType;
@@ -19,6 +39,8 @@ export interface PipelineStep {
     nodeId?: string;
     /** Output steps only — format for table data. */
     tableFormat?: "xlsx" | "csv";
+    /** Validator steps only */
+    rules?: ValidationRule[];
   };
 }
 
@@ -32,6 +54,7 @@ export const STEP_IO: Record<StepType, { accepts: DataShape[]; produces: DataSha
   "extract-text": { accepts: ["files"], produces: "texts" },
   extract: { accepts: ["files", "texts"], produces: "table" },
   "csv-parser": { accepts: ["files", "texts"], produces: "table" },
+  validator: { accepts: ["table"], produces: "table" },
   output: { accepts: ["files", "texts", "table"], produces: "files" }, // produces=placeholder
 };
 
@@ -48,14 +71,15 @@ export interface PipelineFile {
   thumbnail?: string; // base64 data URL for PDF first-page preview
 }
 
-export type InstructionType = "extract" | "csv-parser" | "extract-text" | "merge" | "output";
+export type InstructionType = "extract" | "csv-parser" | "extract-text" | "merge" | "output" | "validator";
 
 export type InstructionPayload =
   | { type: "extract"; text: string; file: PipelineFile | null; outputFormat: "csv" | "text" }
   | { type: "csv-parser"; file: PipelineFile | null }
   | { type: "extract-text" }
   | { type: "merge"; fileType: "pdf" }
-  | { type: "output"; tableFormat: "xlsx" | "csv" };
+  | { type: "output"; tableFormat: "xlsx" | "csv" }
+  | { type: "validator"; rules: ValidationRule[] };
 
 export interface SourceNodeData extends Record<string, unknown> {
   kind: "source";
@@ -86,6 +110,7 @@ export function defaultPayload(type: InstructionType): InstructionPayload {
   if (type === "csv-parser") return { type: "csv-parser", file: null };
   if (type === "extract-text") return { type: "extract-text" };
   if (type === "merge") return { type: "merge", fileType: "pdf" };
+  if (type === "validator") return { type: "validator", rules: [] };
   return { type: "output", tableFormat: "xlsx" };
 }
 

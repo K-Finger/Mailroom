@@ -4,6 +4,7 @@ import { merge } from "./handlers/merge.ts";
 import { extractText } from "./handlers/extract-text.ts";
 import { extract } from "./handlers/extract.ts";
 import { csvParser } from "./handlers/csv-parser.ts";
+import { validator } from "./handlers/validator.ts";
 import type { StepData, PipelineStep, StepHandler } from "./types.ts";
 
 const handlers: Record<string, StepHandler> = {
@@ -11,6 +12,7 @@ const handlers: Record<string, StepHandler> = {
   "extract-text": extractText,
   extract,
   "csv-parser": csvParser,
+  validator,
 };
 
 Deno.serve(async (req) => {

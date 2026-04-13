@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { X, ChevronDown, ChevronUp, Sparkles, Table2, FileText, Download, Layers } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Sparkles, Table2, FileText, Download, Layers, ShieldCheck } from "lucide-react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { ExtractForm } from "./ExtractForm";
 import { CsvParserForm } from "./CsvParserForm";
 import { MergeForm } from "./MergeForm";
 import { OutputStatus } from "./OutputStatus";
+import { ValidatorForm } from "./ValidatorForm";
 
 const TYPE_META: Record<InstructionType, {
   icon: React.ElementType;
@@ -22,11 +23,12 @@ const TYPE_META: Record<InstructionType, {
   collapsible: boolean;
   hasContent: boolean;
 }> = {
-  extract:        { icon: Sparkles,  label: "AI Extract",   collapsible: true,  hasContent: true  },
-  "csv-parser":   { icon: Table2,    label: "CSV Parser",   collapsible: true,  hasContent: true  },
-  "extract-text": { icon: FileText,  label: "Text Extract", collapsible: false, hasContent: false },
-  merge:          { icon: Layers,    label: "Merge",        collapsible: true,  hasContent: true  },
-  output:         { icon: Download,  label: "Output",       collapsible: false, hasContent: true  },
+  extract:        { icon: Sparkles,      label: "AI Extract",   collapsible: true,  hasContent: true  },
+  "csv-parser":   { icon: Table2,        label: "CSV Parser",   collapsible: true,  hasContent: true  },
+  "extract-text": { icon: FileText,      label: "Text Extract", collapsible: false, hasContent: false },
+  merge:          { icon: Layers,        label: "Merge",        collapsible: true,  hasContent: true  },
+  output:         { icon: Download,      label: "Output",       collapsible: false, hasContent: true  },
+  validator:      { icon: ShieldCheck,   label: "Validator",    collapsible: true,  hasContent: true  },
 };
 
 /** Dynamic width for extract nodes — grows with prompt text length. */
@@ -94,6 +96,7 @@ export function InstructionNode({ id, data }: NodeProps<PipelineNode>) {
               {d.instructionType === "extract"     && <ExtractForm id={id} data={d} />}
               {d.instructionType === "csv-parser"  && <CsvParserForm id={id} data={d} />}
               {d.instructionType === "merge"       && <MergeForm id={id} data={d} />}
+              {d.instructionType === "validator"   && <ValidatorForm id={id} data={d} />}
             </div>
           </CollapsibleContent>
         )}

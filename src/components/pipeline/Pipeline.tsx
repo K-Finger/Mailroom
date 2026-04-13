@@ -14,7 +14,7 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -285,12 +285,16 @@ function NodeTray({
   onAdd,
   onReuse,
   onSave,
+  onDelete,
+  onRename,
   disabled,
   savedPipelines,
 }: {
   onAdd: (type: InstructionType) => void;
   onReuse: (pipeline: SavedPipeline) => void;
   onSave: (name: string) => void;
+  onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
   disabled: boolean;
   savedPipelines: SavedPipeline[];
 }) {
@@ -298,6 +302,7 @@ function NodeTray({
   const [tab, setTab] = useState<"add" | "reuse">("add");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [pipelineName, setPipelineName] = useState("");
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
 
   const handleTab = (next: "add" | "reuse") => {
     if (tab === next && open) { setOpen(false); return; }
@@ -311,6 +316,13 @@ function NodeTray({
     onSave(pipelineName.trim());
     setPipelineName("");
     setSaveDialogOpen(false);
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renaming || !renaming.name.trim()) return;
+    onRename(renaming.id, renaming.name.trim());
+    setRenaming(null);
   };
 
   return (
@@ -374,19 +386,51 @@ function NodeTray({
               {savedPipelines.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No saved pipelines yet. Build one and hit Save.</p>
               ) : savedPipelines.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => onReuse(p)}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 hover:bg-accent transition-colors shrink-0"
-                >
-                  <BookOpen className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">{p.name}</span>
-                </button>
+                <div key={p.id} className="group flex items-center gap-1 rounded-lg border border-border bg-background pl-3 pr-1.5 py-1.5 shrink-0">
+                  <button onClick={() => onReuse(p)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <BookOpen className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs font-medium whitespace-nowrap">{p.name}</span>
+                  </button>
+                  <div className="flex items-center gap-0.5 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setRenaming({ id: p.id, name: p.name })}
+                      className="rounded p-1 hover:bg-accent transition-colors"
+                    >
+                      <Pencil className="size-3 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(p.id)}
+                      className="rounded p-1 hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="size-3 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </div>
       )}
+
+      {/* Rename dialog */}
+      <Dialog open={!!renaming} onOpenChange={(o) => { if (!o) setRenaming(null); }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Rename pipeline</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleRenameSubmit} className="flex flex-col gap-4">
+            <Input
+              placeholder="Pipeline name"
+              value={renaming?.name ?? ""}
+              onChange={(e) => setRenaming((r) => r ? { ...r, name: e.target.value } : null)}
+              autoFocus
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={!renaming?.name.trim()}>Rename</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Save dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
@@ -518,6 +562,16 @@ export function Pipeline({ user }: { user: User | null }) {
     setSavedPipelines((prev) => [data, ...prev]);
   }, [supabase, user, nodes, edges]);
 
+  const handleDeletePipeline = useCallback(async (id: string) => {
+    await supabase.from("saved_pipelines").delete().eq("id", id);
+    setSavedPipelines((prev) => prev.filter((p) => p.id !== id));
+  }, [supabase]);
+
+  const handleRenamePipeline = useCallback(async (id: string, name: string) => {
+    await supabase.from("saved_pipelines").update({ name }).eq("id", id);
+    setSavedPipelines((prev) => prev.map((p) => p.id === id ? { ...p, name } : p));
+  }, [supabase]);
+
   const handleReusePipeline = useCallback(async (pipeline: SavedPipeline) => {
     const { data, error } = await supabase
       .from("saved_pipelines")
@@ -638,6 +692,9 @@ export function Pipeline({ user }: { user: User | null }) {
           const payload = data.payload as Extract<InstructionPayload, { type: "output" }>;
           config.nodeId = node.id;
           config.tableFormat = payload.tableFormat;
+        } else if (stepType === "validator") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "validator" }>;
+          config.rules = payload.rules;
         }
 
         return { type: stepType, config };
@@ -740,6 +797,8 @@ export function Pipeline({ user }: { user: User | null }) {
           onAdd={addInstructionNode}
           onReuse={handleReusePipeline}
           onSave={handleSavePipeline}
+          onDelete={handleDeletePipeline}
+          onRename={handleRenamePipeline}
           disabled={busy}
           savedPipelines={savedPipelines}
         />
