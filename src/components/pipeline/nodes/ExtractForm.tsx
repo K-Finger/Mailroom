@@ -11,7 +11,6 @@ import {
   defaultPayload,
   type InstructionNodeData,
   type InstructionPayload,
-  type PipelineFile,
   type PipelineNode,
 } from "@/store/pipeline";
 import { Button } from "@/components/ui/button";
@@ -34,22 +33,21 @@ export function ExtractForm({ id, data }: { id: string; data: InstructionNodeDat
   const allEdges = useEdges();
   const allNodes = useNodes<PipelineNode>();
   const payload = data.payload as Extract<InstructionPayload, { type: "extract" }>;
-  const files = payload.file ? [payload.file.file] : [];
+  const localFiles = payload.file?.kind === "local" ? [payload.file.file] : [];
   const isCsv = payload.outputFormat !== "text";
 
-  // Grey out "Text Extract First" if the immediately upstream node is already extract-text
-  const incomingEdge = allEdges.find((e) => e.target === id);
-  const upstreamNode = incomingEdge ? allNodes.find((n) => n.id === incomingEdge.source) : null;
+  const incomingEdge = allEdges.find((edge) => edge.target === id);
+  const upstreamNode = incomingEdge ? allNodes.find((node) => node.id === incomingEdge.source) : null;
   const upstreamIsExtractText =
     upstreamNode?.data?.kind === "instruction" &&
     (upstreamNode.data as InstructionNodeData).instructionType === "extract-text";
 
   const handleFileChange = useCallback(
     (next: File[]) => {
-      const pf: PipelineFile | null = next[0]
-        ? { id: crypto.randomUUID(), file: next[0], name: next[0].name }
+      const attachment = next[0]
+        ? { kind: "local" as const, id: crypto.randomUUID(), file: next[0], name: next[0].name }
         : null;
-      updateNodeData(id, { payload: { ...payload, file: pf } });
+      updateNodeData(id, { payload: { ...payload, file: attachment } });
     },
     [id, payload, updateNodeData],
   );
@@ -58,30 +56,34 @@ export function ExtractForm({ id, data }: { id: string; data: InstructionNodeDat
     toast.error(message, { description: `"${file.name}" was rejected` });
   }, []);
 
-  /** Insert an extract-text node immediately before this node in the graph. */
   const handleInsertExtractText = useCallback(() => {
-    const edge = getEdges().find((e) => e.target === id);
+    const edge = getEdges().find((currentEdge) => currentEdge.target === id);
     if (!edge) return;
-    const thisNode = getNodes().find((n) => n.id === id);
+    const thisNode = getNodes().find((node) => node.id === id);
     if (!thisNode) return;
     const newId = crypto.randomUUID();
     const insertX = thisNode.position.x;
     setNodes((nds) => [
-      ...nds.map((n) =>
-        n.position.x >= insertX
-          ? { ...n, position: { ...n.position, x: n.position.x + NODE_WIDTH + NODE_GAP } }
-          : n
+      ...nds.map((node) =>
+        node.position.x >= insertX
+          ? { ...node, position: { ...node.position, x: node.position.x + NODE_WIDTH + NODE_GAP } }
+          : node,
       ),
       {
         id: newId,
         type: "instructionNode",
         position: { x: insertX, y: thisNode.position.y },
-        data: { kind: "instruction", instructionType: "extract-text", payload: defaultPayload("extract-text"), collapsed: false },
+        data: {
+          kind: "instruction",
+          instructionType: "extract-text",
+          payload: defaultPayload("extract-text"),
+          collapsed: false,
+        },
         draggable: true,
       } as Node,
     ]);
     setEdges((eds) => [
-      ...eds.filter((e) => e.id !== edge.id),
+      ...eds.filter((existingEdge) => existingEdge.id !== edge.id),
       buildEdge(edge.source, newId),
       buildEdge(newId, id),
     ]);
@@ -93,7 +95,7 @@ export function ExtractForm({ id, data }: { id: string; data: InstructionNodeDat
         <Textarea
           placeholder="Describe what to extract or how to format the output..."
           value={payload.text}
-          onChange={(e) => updateNodeData(id, { payload: { ...payload, text: e.target.value } })}
+          onChange={(event) => updateNodeData(id, { payload: { ...payload, text: event.target.value } })}
           className={`flex-1 text-xs resize-none ${isCsv ? "h-32" : "h-28"}`}
         />
         {isCsv && (
@@ -101,27 +103,50 @@ export function ExtractForm({ id, data }: { id: string; data: InstructionNodeDat
             accept=".xlsx,.xls,.csv"
             maxFiles={1}
             maxSize={10 * 1024 * 1024}
-            value={files}
+            value={localFiles}
             onValueChange={handleFileChange}
             onFileReject={onFileReject}
           >
             <FileUploadDropzone className="min-h-0 w-28 h-32 py-0 flex items-center justify-center">
-              {files.length === 0 ? (
-                <div className="flex flex-col items-center gap-1 text-center px-2">
-                  <p className="text-[10px] font-medium leading-tight">Template <span className="text-muted-foreground font-normal">(optional)</span></p>
-                  <p className="text-[9px] text-muted-foreground">XLSX · CSV</p>
+              {payload.file?.kind === "stored" ? (
+                <div className="flex flex-col items-center gap-2 px-2 text-center">
+                  <p className="text-[10px] font-medium leading-tight">Saved template</p>
+                  <p className="text-[10px] text-muted-foreground break-all">{payload.file.name}</p>
                   <FileUploadTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] mt-0.5">Browse</Button>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]">
+                      Replace
+                    </Button>
+                  </FileUploadTrigger>
+                  <button
+                    type="button"
+                    onClick={() => updateNodeData(id, { payload: { ...payload, file: null } })}
+                    className="text-[10px] text-muted-foreground hover:text-foreground"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : localFiles.length === 0 ? (
+                <div className="flex flex-col items-center gap-1 text-center px-2">
+                  <p className="text-[10px] font-medium leading-tight">
+                    Template <span className="text-muted-foreground font-normal">(optional)</span>
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">XLSX Â· CSV</p>
+                  <FileUploadTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] mt-0.5">
+                      Browse
+                    </Button>
                   </FileUploadTrigger>
                 </div>
               ) : (
                 <FileUploadList className="w-full px-2">
-                  {files.map((file, i) => (
-                    <FileUploadItem key={i} value={file}>
+                  {localFiles.map((file, index) => (
+                    <FileUploadItem key={index} value={file}>
                       <FileUploadItemPreview />
                       <FileUploadItemMetadata />
                       <FileUploadItemDelete asChild>
-                        <Button variant="ghost" size="icon" className="size-5"><X className="size-2.5" /></Button>
+                        <Button variant="ghost" size="icon" className="size-5">
+                          <X className="size-2.5" />
+                        </Button>
                       </FileUploadItemDelete>
                     </FileUploadItem>
                   ))}
@@ -136,12 +161,18 @@ export function ExtractForm({ id, data }: { id: string; data: InstructionNodeDat
         <label className="text-xs text-muted-foreground shrink-0">Output</label>
         <Select
           value={payload.outputFormat}
-          onValueChange={(val) =>
-            updateNodeData(id, { payload: { ...payload, outputFormat: val as "csv" | "text", file: val === "text" ? null : payload.file } })
+          onValueChange={(value) =>
+            updateNodeData(id, {
+              payload: {
+                ...payload,
+                outputFormat: value as "csv" | "text",
+                file: value === "text" ? null : payload.file,
+              },
+            })
           }
         >
           <SelectTrigger size="sm" className="flex-1 text-xs h-7">
-            <SelectValue>{(v: string) => v === "text" ? "Text" : "Table"}</SelectValue>
+            <SelectValue>{(value: string) => value === "text" ? "Text" : "Table"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="csv">Table</SelectItem>

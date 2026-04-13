@@ -27,7 +27,10 @@ export const extract: StepHandler = {
 
     // Structured JSON → table output
     if (config.templatePath) {
-      const bytes = await downloadFile(config.templatePath);
+      const bytes = await downloadFile(
+        config.templatePath,
+        config.templateBucket ?? "source-files",
+      );
       content.push({ type: "text", text: `TEMPLATE (match this structure):\n${await fileToText(bytes, config.templatePath)}` });
     }
     if (config.prompt) content.push({ type: "text", text: `Instructions: ${config.prompt}` });

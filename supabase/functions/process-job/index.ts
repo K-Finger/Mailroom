@@ -5,6 +5,12 @@ import { extractText } from "./handlers/extract-text.ts";
 import { extract } from "./handlers/extract.ts";
 import { csvParser } from "./handlers/csv-parser.ts";
 import type { StepData, PipelineStep, StepHandler } from "./types.ts";
+import {
+  getFunctionUrl,
+  getServiceRoleKey,
+  isInternalRequest,
+  jsonResponse,
+} from "../_shared/supabase.ts";
 
 const handlers: Record<string, StepHandler> = {
   merge,
@@ -12,11 +18,45 @@ const handlers: Record<string, StepHandler> = {
   extract,
   "csv-parser": csvParser,
 };
+const DRIVE_EXPORT_URL = getFunctionUrl("drive-export");
+
+function assertOwnedStoragePath(userId: string, path: string, label: string) {
+  if (!path.startsWith(`${userId}/`)) {
+    throw new Error(`${label} must stay within the current user storage namespace`);
+  }
+}
+
+function validateJobStorageAccess(userId: string, inputPaths: string[], steps: PipelineStep[]) {
+  for (const inputPath of inputPaths) {
+    assertOwnedStoragePath(userId, inputPath, "Input path");
+  }
+
+  for (const step of steps) {
+    if (!step.config.templatePath) {
+      continue;
+    }
+
+    const bucket = step.config.templateBucket ?? "source-files";
+    if (bucket !== "source-files" && bucket !== "pipeline-assets") {
+      throw new Error("Unsupported template bucket");
+    }
+
+    assertOwnedStoragePath(userId, step.config.templatePath, "Template path");
+  }
+}
 
 Deno.serve(async (req) => {
-  const { jobId } = await req.json() as { jobId: string };
+  if (!isInternalRequest(req)) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const { jobId } = await req.json() as { jobId?: string };
+  if (!jobId) {
+    return jsonResponse({ error: "jobId is required" }, 400);
+  }
 
   await supabase.from("jobs").update({ status: "processing" }).eq("id", jobId);
+  await supabase.from("drive_file_runs").update({ status: "processing", error_message: null }).eq("job_id", jobId);
 
   try {
     const { data: job, error } = await supabase
@@ -28,6 +68,7 @@ Deno.serve(async (req) => {
     if (error || !job) throw new Error("Job not found");
 
     const steps = (job.pipeline_steps ?? []) as PipelineStep[];
+    validateJobStorageAccess(job.user_id, job.input_paths, steps);
     let data: StepData = { shape: "files", paths: job.input_paths, names: job.input_names };
     const resultPaths: { nodeId: string; path: string }[] = [];
 
@@ -35,7 +76,11 @@ Deno.serve(async (req) => {
     // Starts with input files + any template files; handlers add temp paths (e.g. merged PDFs).
     const cleanup = new Set<string>([
       ...job.input_paths,
-      ...steps.flatMap((s) => s.config.templatePath ? [s.config.templatePath] : []),
+      ...steps.flatMap((s) =>
+        s.config.templatePath && (s.config.templateBucket ?? "source-files") === "source-files"
+          ? [s.config.templatePath]
+          : []
+      ),
     ]);
 
     for (const step of steps) {
@@ -61,15 +106,37 @@ Deno.serve(async (req) => {
     }
 
     await supabase.from("jobs").update({ status: "done", result_paths: resultPaths }).eq("id", jobId);
+    await supabase
+      .from("drive_file_runs")
+      .update({ status: "awaiting_export", result_paths: resultPaths, error_message: null })
+      .eq("job_id", jobId);
+
+    try {
+      const exportResponse = await fetch(DRIVE_EXPORT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getServiceRoleKey()}`,
+        },
+        body: JSON.stringify({ jobId }),
+      });
+
+      if (!exportResponse.ok) {
+        console.error("drive-export failed", await exportResponse.text());
+      }
+    } catch (exportError) {
+      console.error("drive-export dispatch failed", exportError);
+    }
 
     // Delete source files, template files, and temp files — results are kept.
     if (cleanup.size > 0) {
       await supabase.storage.from("source-files").remove([...cleanup]);
     }
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    return jsonResponse({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await supabase.from("jobs").update({ status: "error", error_message: msg }).eq("id", jobId);
-    return new Response(JSON.stringify({ error: msg }), { status: 500 });
+    await supabase.from("drive_file_runs").update({ status: "error", error_message: msg }).eq("job_id", jobId);
+    return jsonResponse({ error: msg }, 500);
   }
 });

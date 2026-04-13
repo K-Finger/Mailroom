@@ -1,39 +1,37 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getAppUser } from "@/lib/auth/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSupportedDriveUploadBuckets } from "@/lib/google-drive/server";
 
-// Set AUTH_ENABLED=true in env to enforce authentication.
-const AUTH_ENABLED = process.env.AUTH_ENABLED === "true";
+const ALLOWED_BUCKETS = new Set(getSupportedDriveUploadBuckets());
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const appUser = await getAppUser();
+  if (!appUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (AUTH_ENABLED && !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const userId = user?.id ?? "00000000-0000-0000-0000-000000000000";
-
-  const { files } = await request.json() as {
+  const { files, bucket = "source-files" } = await request.json() as {
     files: Array<{ name: string; type: string }>;
+    bucket?: "source-files" | "pipeline-assets";
   };
 
   if (!Array.isArray(files) || files.length === 0) {
     return NextResponse.json({ error: "No files provided" }, { status: 400 });
   }
 
-  const storageClient = AUTH_ENABLED
-    ? supabase
-    : createServiceClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+  if (!ALLOWED_BUCKETS.has(bucket)) {
+    return NextResponse.json({ error: "Unsupported upload bucket" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
 
   const signed = await Promise.all(
     files.map(async (f) => {
       const ext = f.name.split(".").pop() ?? "bin";
-      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-      const { data, error } = await storageClient.storage
-        .from("source-files")
+      const path = `${appUser.userId}/${crypto.randomUUID()}.${ext}`;
+      const { data, error } = await admin.storage
+        .from(bucket)
         .createSignedUploadUrl(path);
 
       if (error) throw new Error(error.message);

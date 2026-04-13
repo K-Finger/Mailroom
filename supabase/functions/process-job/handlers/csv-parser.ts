@@ -7,7 +7,10 @@ export const csvParser: StepHandler = {
   async run(input, config, _cleanup) {
     if (!config.templatePath) throw new Error("csv-parser requires template");
 
-    const templateBytes = await downloadFile(config.templatePath);
+    const templateBytes = await downloadFile(
+      config.templatePath,
+      config.templateBucket ?? "source-files",
+    );
     const templateText = new TextDecoder().decode(templateBytes);
     const headers = templateText.trim().split("\n")[0].split(",").map((h) => h.trim());
     const placeholders = headers.filter((h) => /^\{\{.+\}\}$/.test(h));

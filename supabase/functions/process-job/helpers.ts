@@ -3,8 +3,11 @@ import ExcelJS from "npm:exceljs";
 import { supabase, anthropic, MODEL } from "./clients.ts";
 import type { StepData } from "./types.ts";
 
-export async function downloadFile(path: string): Promise<Uint8Array> {
-  const { data, error } = await supabase.storage.from("source-files").download(path);
+export async function downloadFile(
+  path: string,
+  bucket: "source-files" | "pipeline-assets" = "source-files",
+): Promise<Uint8Array> {
+  const { data, error } = await supabase.storage.from(bucket).download(path);
   if (error) throw new Error(`Download failed: ${error.message}`);
   return new Uint8Array(await data.arrayBuffer());
 }
@@ -100,7 +103,7 @@ export async function shapeToResult(
   if (data.paths.length === 1) {
     const ext = data.names[0].split(".").pop() ?? "bin";
     return {
-      bytes: await downloadFile(data.paths[0]),
+      bytes: await downloadFile(data.paths[0], "source-files"),
       filename: `result.${ext}`,
       contentType: "application/octet-stream",
     };
@@ -109,7 +112,7 @@ export async function shapeToResult(
   const JSZip = (await import("npm:jszip")).default;
   const zip = new JSZip();
   for (let i = 0; i < data.paths.length; i++) {
-    zip.file(data.names[i], await downloadFile(data.paths[i]));
+    zip.file(data.names[i], await downloadFile(data.paths[i], "source-files"));
   }
   return {
     bytes: await zip.generateAsync({ type: "uint8array" }),
@@ -123,7 +126,7 @@ export async function inputToContent(input: StepData): Promise<Anthropic.Message
   const blocks: Anthropic.MessageParam["content"] = [];
   if (input.shape === "files") {
     for (let i = 0; i < input.paths.length; i++) {
-      const bytes = await downloadFile(input.paths[i]);
+      const bytes = await downloadFile(input.paths[i], "source-files");
       const name = input.names[i];
       blocks.push({ type: "text", text: `### ${name}\n${await fileToText(bytes, name)}` });
     }

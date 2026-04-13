@@ -7,12 +7,31 @@ import { addEdge, type Node, type Edge, type Connection } from "@xyflow/react";
 
 export type DataShape = "files" | "texts" | "table";
 export type StepType = "extract-text" | "extract" | "csv-parser" | "merge" | "output";
+export type TemplateBucket = "source-files" | "pipeline-assets";
+
+export interface LocalTemplateAttachment {
+  kind: "local";
+  id: string;
+  file: File;
+  name: string;
+}
+
+export interface StoredTemplateAttachment {
+  kind: "stored";
+  id: string;
+  name: string;
+  path: string;
+  bucket: TemplateBucket;
+}
+
+export type TemplateAttachment = LocalTemplateAttachment | StoredTemplateAttachment;
 
 export interface PipelineStep {
   type: StepType;
   config: {
     prompt?: string;
     templatePath?: string;
+    templateBucket?: TemplateBucket;
     fileType?: string;
     outputFormat?: "csv" | "text";
     /** Output steps only — identifies which node produced this result in result_paths[]. */
@@ -51,8 +70,8 @@ export interface PipelineFile {
 export type InstructionType = "extract" | "csv-parser" | "extract-text" | "merge" | "output";
 
 export type InstructionPayload =
-  | { type: "extract"; text: string; file: PipelineFile | null; outputFormat: "csv" | "text" }
-  | { type: "csv-parser"; file: PipelineFile | null }
+  | { type: "extract"; text: string; file: TemplateAttachment | null; outputFormat: "csv" | "text" }
+  | { type: "csv-parser"; file: TemplateAttachment | null }
   | { type: "extract-text" }
   | { type: "merge"; fileType: "pdf" }
   | { type: "output"; tableFormat: "xlsx" | "csv" };

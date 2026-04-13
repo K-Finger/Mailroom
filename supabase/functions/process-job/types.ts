@@ -10,6 +10,7 @@ export interface PipelineStep {
   config: {
     prompt?: string;
     templatePath?: string;
+    templateBucket?: "source-files" | "pipeline-assets";
     fileType?: string;
     outputFormat?: "csv" | "text";
     /** Output steps only — identifies which node produced this result in result_paths[]. */

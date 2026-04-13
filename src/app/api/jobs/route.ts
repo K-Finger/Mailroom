@@ -1,22 +1,17 @@
 import { after } from "next/server";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getAppUser } from "@/lib/auth/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { PipelineStep } from "@/store/pipeline";
 
 const EDGE_FUNCTION_URL =
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/process-job`;
 
-// Set AUTH_ENABLED=true in env to enforce authentication.
-const AUTH_ENABLED = process.env.AUTH_ENABLED === "true";
-
 export async function POST(request: Request) {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (AUTH_ENABLED && !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const userId = user?.id ?? "00000000-0000-0000-0000-000000000000";
+  const appUser = await getAppUser();
+  if (!appUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { inputPaths, inputNames, pipelineSteps } = await request.json() as {
     inputPaths: string[];
@@ -28,17 +23,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No input files" }, { status: 400 });
   }
 
-  const insertClient = AUTH_ENABLED
-    ? supabase
-    : createServiceClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+  const admin = createAdminClient();
 
-  const { data: job, error } = await insertClient
+  const { data: job, error } = await admin
     .from("jobs")
     .insert({
-      user_id: userId,
+      user_id: appUser.userId,
       status: "pending",
       input_paths: inputPaths,
       input_names: inputNames,
