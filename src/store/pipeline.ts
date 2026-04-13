@@ -103,8 +103,13 @@ export interface PipelineFile {
 
 export type InstructionType = StepType;
 
+export interface TemplateData {
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
 export type InstructionPayload =
-  | { type: "extract"; text: string; file: PipelineFile | null; outputFormat: "csv" | "text" }
+  | { type: "extract"; text: string; file: PipelineFile | null; outputFormat: "csv" | "text"; templateData: TemplateData | null }
   | { type: "csv-parser"; file: PipelineFile | null }
   | { type: "extract-text" }
   | { type: "merge"; fileType: "pdf" }
@@ -139,7 +144,7 @@ export const NODE_WIDTH = 200;
 export const NODE_GAP = 80;
 
 export function defaultPayload(type: InstructionType): InstructionPayload {
-  if (type === "extract") return { type: "extract", text: "", file: null, outputFormat: "csv" };
+  if (type === "extract") return { type: "extract", text: "", file: null, outputFormat: "csv", templateData: null };
   if (type === "csv-parser") return { type: "csv-parser", file: null };
   if (type === "extract-text") return { type: "extract-text" };
   if (type === "merge") return { type: "merge", fileType: "pdf" };
@@ -204,15 +209,25 @@ export { addEdge, type Connection };
 // Store — job state only
 // ---------------------------------------------------------------------------
 
+export interface PreviewData {
+  name: string;
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
 interface PipelineState {
   step: ProcessingStep;
   jobId: string | null;
   results: Record<string, string>; // nodeId → signed URL or sheet URL
   error: string | null;
+  previewData: PreviewData | null;
+  templateEditorNodeId: string | null;
   setStep: (step: ProcessingStep) => void;
   setJobId: (id: string | null) => void;
   setResults: (results: Record<string, string>) => void;
   setError: (error: string | null) => void;
+  setPreviewData: (data: PreviewData | null) => void;
+  setTemplateEditorNodeId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -221,9 +236,13 @@ export const usePipelineStore = create<PipelineState>((set) => ({
   jobId: null,
   results: {},
   error: null,
+  previewData: null,
+  templateEditorNodeId: null,
   setStep: (step) => set({ step }),
   setJobId: (id) => set({ jobId: id }),
   setResults: (results) => set({ results }),
   setError: (error) => set({ error }),
-  reset: () => set({ step: "idle", jobId: null, results: {}, error: null }),
+  setPreviewData: (data) => set({ previewData: data }),
+  setTemplateEditorNodeId: (id) => set({ templateEditorNodeId: id }),
+  reset: () => set({ step: "idle", jobId: null, results: {}, error: null, previewData: null }),
 }));

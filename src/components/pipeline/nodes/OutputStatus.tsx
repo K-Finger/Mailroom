@@ -1,15 +1,14 @@
 "use client";
 
-import { Download, Loader2, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Download, Loader2, AlertTriangle, Table2 } from "lucide-react";
 import { useReactFlow, useNodes, useEdges, type Edge } from "@xyflow/react";
+import * as XLSX from "xlsx";
 import {
   usePipelineStore,
-  INITIAL_NODES,
-  INITIAL_EDGES,
   producedShape,
   STEP_IO,
   type DataShape,
-  type SourceNodeData,
   type PipelineNode,
   type InstructionNodeData,
   type InstructionPayload,
@@ -46,12 +45,9 @@ function useIncomingShape(nodeId: string): DataShape {
 }
 
 export function OutputStatus({ id }: { id: string }) {
-  const { step, results, error, reset } = usePipelineStore();
-  const { setNodes, setEdges, updateNodeData, getNode } = useReactFlow();
-  const nodes = useNodes<PipelineNode>();
-  const hasFiles = nodes.some(
-    (n) => n.data.kind === "source" && (n.data as SourceNodeData).inputFiles.length > 0,
-  );
+  const { step, results, error, setPreviewData } = usePipelineStore();
+  const { updateNodeData, getNode } = useReactFlow();
+  const [previewing, setPreviewing] = useState(false);
   const busy = step === "uploading" || step === "processing";
   const resultUrl = results[id];
   const incomingShape = useIncomingShape(id);
@@ -67,11 +63,35 @@ export function OutputStatus({ id }: { id: string }) {
     reset();
   };
 
+  const handlePreview = async () => {
+    if (!resultUrl) return;
+    setPreviewing(true);
+    try {
+      const res = await fetch(resultUrl);
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const raw = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 }) as string[][];
+      if (raw.length === 0) return;
+      const [header, ...dataRows] = raw;
+      const columns = header.map(String);
+      const rows = dataRows.map((row) =>
+        Object.fromEntries(columns.map((col, i) => [col, String(row[i] ?? "")]))
+      );
+      setPreviewData({ name: sheetName, columns, rows });
+    } catch {
+      // silently fail — download still works
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-start gap-2">
       {step === "idle" && isTable && (
         <div className="flex items-center gap-2 w-full">
-          <label className="text-xs text-muted-foreground shrink-0">Format</label>
+          <label className="text-xs text-muted-foreground shrink-0">File type</label>
           <Select
             value={tableFormat}
             onValueChange={(val) =>
@@ -79,7 +99,7 @@ export function OutputStatus({ id }: { id: string }) {
             }
           >
             <SelectTrigger size="sm" className="flex-1 text-xs h-7">
-              <SelectValue />
+              <SelectValue>{(v: string) => v.toUpperCase()}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="xlsx">XLSX</SelectItem>
@@ -89,9 +109,6 @@ export function OutputStatus({ id }: { id: string }) {
         </div>
       )}
 
-      {step === "idle" && (
-        <p className="text-xs text-muted-foreground">{hasFiles ? "Ready to run" : "Add source files"}</p>
-      )}
       {busy && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="size-3 animate-spin" />
@@ -99,27 +116,36 @@ export function OutputStatus({ id }: { id: string }) {
         </div>
       )}
       {step === "done" && resultUrl && (
-        <a href={resultUrl} download>
-          <Button size="sm" variant="outline" className="h-8 px-4 text-xs gap-2">
-            <Download className="size-3" />
-            Download
-          </Button>
-        </a>
+        <div className="flex items-center gap-2 flex-wrap">
+          <a href={resultUrl} download>
+            <Button size="sm" variant="outline" className="h-8 px-4 text-xs gap-2">
+              <Download className="size-3" />
+              Download
+            </Button>
+          </a>
+          {isTable && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-4 text-xs gap-2"
+              onClick={handlePreview}
+              disabled={previewing}
+            >
+              {previewing ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Table2 className="size-3" />
+              )}
+              Preview
+            </Button>
+          )}
+        </div>
       )}
       {step === "error" && (
         <div className="flex items-start gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-2 py-1.5 w-full">
           <AlertTriangle className="size-3 text-destructive shrink-0 mt-0.5" />
           <p className="text-xs text-destructive leading-snug">{error ?? "Processing failed"}</p>
         </div>
-      )}
-      {(step === "done" || step === "error") && (
-        <button
-          type="button"
-          onClick={handleReset}
-          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Start over
-        </button>
       )}
     </div>
   );

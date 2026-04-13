@@ -16,7 +16,7 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail, RotateCcw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -50,6 +50,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { InstructionPicker, INSTRUCTION_TYPES } from "./instruction-picker";
 import { SourceNode } from "./nodes/SourceNode";
 import { InstructionNode } from "./nodes/InstructionNode";
+import { SpreadsheetViewer } from "./SpreadsheetViewer";
+import { TemplateEditor } from "./TemplateEditor";
 
 const nodeTypes: NodeTypes = {
   sourceNode: SourceNode,
@@ -472,7 +474,7 @@ function NodeTray({
 
 export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisMonth: number }) {
   const supabase = createClient();
-  const { step, jobId, error, setStep, setJobId, setResults, setError } = usePipelineStore();
+  const { step, jobId, error, previewData, templateEditorNodeId, setStep, setJobId, setResults, setError, setTemplateEditorNodeId } = usePipelineStore();
   const [savedPipelines, setSavedPipelines] = useState<SavedPipeline[]>([]);
 
   useEffect(() => {
@@ -635,7 +637,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
                 } else if (path === "email://sent") {
                   results[nodeId] = "sent";
                 } else {
-                  const { data, error } = await supabase.storage.from("results").createSignedUrl(path, 60 * 5);
+                  const { data, error } = await supabase.storage.from("results").createSignedUrl(path, 60 * 60);
                   if (error) setError(`Failed to get download URL for result`);
                   if (data?.signedUrl) results[nodeId] = data.signedUrl;
                 }
@@ -672,7 +674,18 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
         const data = node.data as InstructionNodeData;
         if (data.instructionType === "extract") {
           const payload = data.payload as Extract<InstructionPayload, { type: "extract" }>;
-          if (payload.file?.file) templateFiles.push({ stepIndex: i, file: payload.file.file });
+          if (payload.templateData && !payload.file?.file) {
+            // Convert built template to a CSV file
+            const { columns, rows } = payload.templateData;
+            const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+            const csv = [
+              columns.map(escape).join(","),
+              ...rows.map((row) => columns.map((col) => escape(row[col] ?? "")).join(",")),
+            ].join("\n");
+            templateFiles.push({ stepIndex: i, file: new File([csv], "template.csv", { type: "text/csv" }) });
+          } else if (payload.file?.file) {
+            templateFiles.push({ stepIndex: i, file: payload.file.file });
+          }
         } else if (data.instructionType === "csv-parser") {
           const payload = data.payload as Extract<InstructionPayload, { type: "csv-parser" }>;
           if (payload.file?.file) templateFiles.push({ stepIndex: i, file: payload.file.file });
@@ -766,7 +779,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
       {/* Shared top bar — single border-b spans full width */}
       <div className="flex items-center border-b bg-card shrink-0">
         <div className="w-72 shrink-0 px-4 py-2 border-r">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Workflow</p>
+          <p className="text-sm font-semibold">Mailroom</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 flex-1">
           <InstructionPicker onSelect={addInstructionNode} disabled={busy} />
@@ -808,53 +821,82 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
         {/* Right side */}
         <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Canvas */}
-        <div className="flex-1 min-h-0">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange as OnNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            onPaneClick={onPaneClick}
-            onEdgeClick={onEdgeClick}
-            onInit={setRfInstance}
-            nodeTypes={nodeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
-            minZoom={0.9}
-            translateExtent={[[-400, -300], [2000, 800]]}
-            edgesReconnectable={false}
-            defaultEdgeOptions={{
-              type: "smoothstep",
-              style: { stroke: "color-mix(in oklch, var(--foreground) 30%, transparent)", strokeWidth: 2 },
-              interactionWidth: 20,
-            }}
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={1} className="opacity-30" />
-            <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
-            {inputFiles.length === 0 && step === "idle" && (
-              <Panel position="top-center" className="pointer-events-none mt-6">
-                <p className="text-xs text-muted-foreground bg-card/80 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-sm">
-                  Drop files into <strong>Source</strong>, add steps below, then hit <strong>Run</strong>
-                </p>
-              </Panel>
-            )}
-          </ReactFlow>
-        </div>
+        {/* Spreadsheet viewer — replaces canvas when preview is active */}
+        {previewData && (
+          <div className="flex-1 min-h-0">
+            <SpreadsheetViewer />
+          </div>
+        )}
 
-        {/* Node tray */}
-        <NodeTray
-          onAdd={addInstructionNode}
-          onReuse={handleReusePipeline}
-          onSave={handleSavePipeline}
-          onDelete={handleDeletePipeline}
-          onRename={handleRenamePipeline}
-          disabled={busy}
-          savedPipelines={savedPipelines}
-        />
+        {/* Template editor — replaces canvas when editing an extract template */}
+        {templateEditorNodeId && !previewData && (() => {
+          const node = nodes.find((n) => n.id === templateEditorNodeId);
+          const payload = node ? (node.data as InstructionNodeData).payload as Extract<InstructionPayload, { type: "extract" }> : null;
+          return (
+            <div className="flex-1 min-h-0">
+              <TemplateEditor
+                initialData={payload?.templateData ?? null}
+                onSave={(data) => {
+                  setNodes((nds) => nds.map((n) =>
+                    n.id === templateEditorNodeId
+                      ? { ...n, data: { ...n.data, payload: { ...(n.data as InstructionNodeData).payload, templateData: data, file: null } } }
+                      : n
+                  ));
+                  setTemplateEditorNodeId(null);
+                }}
+                onClose={() => setTemplateEditorNodeId(null)}
+              />
+            </div>
+          );
+        })()}
+
+        {/* Canvas + node tray — hidden while previewing or editing template */}
+        <div className={cn("flex-1 min-h-0 flex flex-col", (previewData || templateEditorNodeId) && "hidden")}>
+          <div className="flex-1 min-h-0">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange as OnNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              onPaneClick={onPaneClick}
+              onEdgeClick={onEdgeClick}
+              onInit={setRfInstance}
+              nodeTypes={nodeTypes}
+              fitView
+              fitViewOptions={{ padding: 0.3 }}
+              minZoom={0.9}
+              translateExtent={[[-400, -300], [2000, 800]]}
+              edgesReconnectable={false}
+              defaultEdgeOptions={{
+                type: "smoothstep",
+                style: { stroke: "color-mix(in oklch, var(--foreground) 30%, transparent)", strokeWidth: 2 },
+                interactionWidth: 20,
+              }}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background variant={BackgroundVariant.Dots} gap={16} size={1} className="opacity-30" />
+              <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
+              {inputFiles.length === 0 && step === "idle" && (
+                <Panel position="top-center" className="pointer-events-none mt-6">
+                  <p className="text-xs text-muted-foreground bg-card/80 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-sm">
+                    Drop files into <strong>Source</strong>, add steps below, then hit <strong>Run</strong>
+                  </p>
+                </Panel>
+              )}
+            </ReactFlow>
+          </div>
+          <NodeTray
+            onAdd={addInstructionNode}
+            onReuse={handleReusePipeline}
+            onSave={handleSavePipeline}
+            onDelete={handleDeletePipeline}
+            onRename={handleRenamePipeline}
+            disabled={busy}
+            savedPipelines={savedPipelines}
+          />
+        </div>
         </div>
       </div>
     </div>
