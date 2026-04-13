@@ -38,12 +38,14 @@ export async function fileToText(bytes: Uint8Array, name: string): Promise<strin
 /** Send content to Claude and parse the JSON response. */
 export async function askClaude(
   content: Anthropic.MessageParam["content"],
+  options?: { model?: string; maxTokens?: number },
 ): Promise<{ columns: string[]; rows: Record<string, unknown>[] }> {
-  const msg = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 8192,
+  const stream = anthropic.messages.stream({
+    model: options?.model ?? MODEL,
+    max_tokens: options?.maxTokens ?? 8192,
     messages: [{ role: "user", content }],
   });
+  const msg = await stream.finalMessage();
   const raw = msg.content.find((b) => b.type === "text")?.text ?? "{}";
   return JSON.parse(raw.replace(/^```[^\n]*\n?/, "").replace(/```$/, "").trim());
 }

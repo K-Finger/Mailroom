@@ -39,7 +39,7 @@ export const extract: StepHandler = {
 Include EVERY record. Use null for missing. No markdown fences.`,
     });
 
-    const result = await askClaude(content);
+    const result = await askClaude(content, { model: "claude-sonnet-4-6", maxTokens: 32768 });
     return { shape: "table", columns: result.columns, rows: result.rows };
   },
 };

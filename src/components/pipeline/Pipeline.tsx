@@ -14,10 +14,13 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/app/auth/actions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   usePipelineStore,
   INITIAL_NODES,
@@ -39,6 +42,8 @@ import {
   type PipelineEdge,
 } from "@/store/pipeline";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { InstructionPicker, INSTRUCTION_TYPES } from "./instruction-picker";
 import { SourceNode } from "./nodes/SourceNode";
 import { InstructionNode } from "./nodes/InstructionNode";
@@ -267,34 +272,141 @@ function WorkflowPanel({
 }
 
 // ---------------------------------------------------------------------------
-// NodeTray
+// NodeTray (accordion with Add / Reuse tabs)
 // ---------------------------------------------------------------------------
 
-const TRAY_TYPES = INSTRUCTION_TYPES;
+interface SavedPipeline {
+  id: string;
+  name: string;
+  created_at: string;
+}
 
 function NodeTray({
   onAdd,
+  onReuse,
+  onSave,
   disabled,
+  savedPipelines,
 }: {
   onAdd: (type: InstructionType) => void;
+  onReuse: (pipeline: SavedPipeline) => void;
+  onSave: (name: string) => void;
   disabled: boolean;
+  savedPipelines: SavedPipeline[];
 }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"add" | "reuse">("add");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [pipelineName, setPipelineName] = useState("");
+
+  const handleTab = (next: "add" | "reuse") => {
+    if (tab === next && open) { setOpen(false); return; }
+    setTab(next);
+    setOpen(true);
+  };
+
+  const handleSaveSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pipelineName.trim()) return;
+    onSave(pipelineName.trim());
+    setPipelineName("");
+    setSaveDialogOpen(false);
+  };
+
   return (
-    <div className="flex items-center gap-2 px-4 py-3 border-t bg-card overflow-x-auto shrink-0">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground shrink-0 mr-1">
-        Add
-      </span>
-      {TRAY_TYPES.map(({ id, icon: Icon, label }) => (
+    <div className="border-t bg-card shrink-0">
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 px-3 py-2">
         <button
-          key={id}
-          onClick={() => onAdd(id)}
-          disabled={disabled}
-          className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none shrink-0"
+          onClick={() => handleTab("add")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+            open && tab === "add" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
         >
-          <Icon className="size-3.5 text-muted-foreground shrink-0" />
-          <span className="text-xs font-medium whitespace-nowrap">{label}</span>
+          <ChevronDown className={cn("size-3 transition-transform", open && tab === "add" && "rotate-180")} />
+          Add
         </button>
-      ))}
+        <button
+          onClick={() => handleTab("reuse")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+            open && tab === "reuse" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <BookOpen className="size-3" />
+          Reuse
+          {savedPipelines.length > 0 && (
+            <span className="rounded-full bg-primary/10 text-primary px-1.5 py-0 text-[10px] font-semibold">{savedPipelines.length}</span>
+          )}
+        </button>
+        <div className="flex-1" />
+        <button
+          onClick={() => setSaveDialogOpen(true)}
+          disabled={disabled}
+          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <Save className="size-3" />
+          Save pipeline
+        </button>
+      </div>
+
+      {/* Panel */}
+      {open && (
+        <div className="border-t px-3 py-3 overflow-x-auto">
+          {tab === "add" && (
+            <div className="flex items-center gap-2">
+              {INSTRUCTION_TYPES.map(({ id, icon: Icon, label }) => (
+                <button
+                  key={id}
+                  onClick={() => onAdd(id)}
+                  disabled={disabled}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                >
+                  <Icon className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs font-medium whitespace-nowrap">{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {tab === "reuse" && (
+            <div className="flex items-center gap-2">
+              {savedPipelines.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No saved pipelines yet. Build one and hit Save.</p>
+              ) : savedPipelines.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onReuse(p)}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 hover:bg-accent transition-colors shrink-0"
+                >
+                  <BookOpen className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs font-medium whitespace-nowrap">{p.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Save dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Save pipeline</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveSubmit} className="flex flex-col gap-4">
+            <Input
+              placeholder="Pipeline name"
+              value={pipelineName}
+              onChange={(e) => setPipelineName(e.target.value)}
+              autoFocus
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={!pipelineName.trim()}>Save</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -303,9 +415,18 @@ function NodeTray({
 // Pipeline
 // ---------------------------------------------------------------------------
 
-export function Pipeline() {
+export function Pipeline({ user }: { user: User | null }) {
   const supabase = createClient();
   const { step, jobId, setStep, setJobId, setResults, setError } = usePipelineStore();
+  const [savedPipelines, setSavedPipelines] = useState<SavedPipeline[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("saved_pipelines")
+      .select("id, name, created_at")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { if (data) setSavedPipelines(data); });
+  }, [supabase]);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -373,6 +494,40 @@ export function Pipeline() {
   const onEdgeClick = useCallback((_: React.MouseEvent, edge: { id: string }) => {
     setEdges((eds) => eds.filter((e) => e.id !== edge.id));
   }, [setEdges]);
+
+  const handleSavePipeline = useCallback(async (name: string) => {
+    // Strip non-serializable File objects before persisting
+    const serialisableNodes = nodes.map((n) => {
+      if (n.data.kind === "source") {
+        return { ...n, data: { ...n.data, inputFiles: [] } };
+      }
+      const d = n.data as InstructionNodeData;
+      const payload = { ...d.payload } as Record<string, unknown>;
+      if ("file" in payload) payload.file = null;
+      return { ...n, data: { ...d, payload } };
+    });
+
+    if (!user) { console.error("Not logged in"); return; }
+
+    const { data, error } = await supabase
+      .from("saved_pipelines")
+      .insert({ name, user_id: user.id, nodes: serialisableNodes, edges })
+      .select("id, name, created_at")
+      .single();
+    if (error) { console.error("Save failed", error.message, error.details); return; }
+    setSavedPipelines((prev) => [data, ...prev]);
+  }, [supabase, user, nodes, edges]);
+
+  const handleReusePipeline = useCallback(async (pipeline: SavedPipeline) => {
+    const { data, error } = await supabase
+      .from("saved_pipelines")
+      .select("nodes, edges")
+      .eq("id", pipeline.id)
+      .single();
+    if (error || !data) { console.error("Load failed", error); return; }
+    setNodes(data.nodes as PipelineNode[]);
+    setEdges(data.edges as PipelineEdge[]);
+  }, [supabase, setNodes, setEdges]);
 
   const busy = step === "uploading" || step === "processing";
   const sourceNode = nodes.find((n) => n.id === "source");
@@ -519,6 +674,18 @@ export function Pipeline() {
           <Button size="sm" disabled={!canSubmit} onClick={handleRun}>
             {busy ? (step === "uploading" ? "Uploading..." : "Processing...") : "Run"}
           </Button>
+          <div className="flex-1" />
+          <DropdownMenu>
+            <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none">
+              {user?.email ?? "Account"}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => signOut()}>
+                <LogOut className="size-3.5" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -569,7 +736,13 @@ export function Pipeline() {
         </div>
 
         {/* Node tray */}
-        <NodeTray onAdd={addInstructionNode} disabled={busy} />
+        <NodeTray
+          onAdd={addInstructionNode}
+          onReuse={handleReusePipeline}
+          onSave={handleSavePipeline}
+          disabled={busy}
+          savedPipelines={savedPipelines}
+        />
         </div>
       </div>
     </div>

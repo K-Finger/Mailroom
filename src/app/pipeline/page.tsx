@@ -1,9 +1,13 @@
+import { createClient } from "@/lib/supabase/server";
 import { Pipeline } from "@/components/pipeline/Pipeline";
 
-export default function PipelinePage() {
+export default async function PipelinePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="h-screen overflow-hidden">
-      <Pipeline />
+      <Pipeline user={user} />
     </div>
   );
 }
