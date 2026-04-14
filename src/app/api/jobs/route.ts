@@ -22,14 +22,9 @@ export async function POST(request: Request) {
   }
 
   if (process.env.BILLING_ENABLED === "true") {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("stripe_subscription_status")
-      .eq("id", user.id)
-      .single();
-    const status = profile?.stripe_subscription_status;
-    if (status !== "active" && status !== "trialing") {
-      return NextResponse.json({ error: "Active subscription required" }, { status: 402 });
+    const { data: hasCredits } = await supabase.rpc("deduct_credit", { user_id: user.id });
+    if (!hasCredits) {
+      return NextResponse.json({ error: "No credits remaining — buy more at /billing" }, { status: 402 });
     }
   }
 
