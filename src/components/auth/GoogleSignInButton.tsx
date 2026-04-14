@@ -15,6 +15,10 @@ export function GoogleSignInButton() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         scopes: "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly",
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
   };

@@ -16,7 +16,7 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail, Eye, EyeOff, Trash } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail, Eye, EyeOff, Trash, RefreshCw, Loader2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -609,6 +609,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
   const [watchSaving, setWatchSaving] = useState(false);
   const [watchersOpen, setWatchersOpen] = useState(false);
   const [watchers, setWatchers] = useState<Array<{ id: string; folder_name: string; enabled: boolean; last_checked_at: string | null }>>([]);
+  const [checkLoading, setCheckLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   // Toast once when a job transitions to error state
@@ -897,6 +898,30 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
     setWatchers((prev) => prev.filter((w) => w.id !== id));
   }, []);
 
+  const handleCheckNow = useCallback(async () => {
+    setCheckLoading(true);
+    try {
+      const res = await fetch("/api/drive-watchers/check", { method: "POST" });
+      const data = await res.json() as { newFiles?: number; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Check failed");
+      if (data.newFiles && data.newFiles > 0) {
+        toast.success(`Found ${data.newFiles} new file${data.newFiles !== 1 ? "s" : ""} — processing started`);
+      } else {
+        toast.info("No new files found");
+      }
+      // Refresh watcher list to update last_checked_at
+      const listRes = await fetch("/api/drive-watchers");
+      if (listRes.ok) {
+        const { watchers: updated } = await listRes.json() as { watchers: typeof watchers };
+        setWatchers(updated ?? []);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Check failed");
+    } finally {
+      setCheckLoading(false);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       {/* Shared top bar — single border-b spans full width */}
@@ -1063,9 +1088,22 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
       <Dialog open={watchersOpen} onOpenChange={setWatchersOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="size-4" />
-              Drive watchers
+            <DialogTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Eye className="size-4" />
+                Drive watchers
+              </span>
+              {watchers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleCheckNow}
+                  disabled={checkLoading}
+                  className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 font-normal"
+                >
+                  {checkLoading ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+                  {checkLoading ? "Checking..." : "Check now"}
+                </button>
+              )}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-80 overflow-y-auto">
