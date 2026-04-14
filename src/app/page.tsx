@@ -175,7 +175,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ── HERO (blue) ─────────────────────────────────── */}
-      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-400 overflow-hidden pb-0">
+      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-300 overflow-hidden pb-0">
         {/* subtle radial glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(255,255,255,0.12),transparent)] pointer-events-none" />
 
@@ -183,10 +183,12 @@ export default function LandingPage() {
         <nav className="fixed top-4 left-0 right-0 z-50 flex items-center justify-center px-6">
           <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg w-full max-w-3xl border border-blue-600">
             {/* Logo - left */}
-            <span className="text-xl font-bold text-blue-700 tracking-tight pl-1 shrink-0">MailRoom</span>
+            <span className="text-xl font-bold text-blue-700 tracking-tight pl-1 shrink-0">
+              <a href="#hero">MailRoom</a>
+            </span>
             {/* Nav links - absolutely centered */}
             <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1">
-              {["Features", "How it works", "Pricing"].map((item) => (
+              {["How it works", "Pricing", "Features"].map((item) => (
                 <a
                   key={item}
                   href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -215,7 +217,7 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero text */}
-        <div className="relative z-10 max-w-6xl mx-auto text-center px-4 pt-32 pb-14">
+        <div id="hero" className="relative z-10 max-w-6xl mx-auto text-center px-4 pt-32 pb-14">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-medium tracking-tighter text-white mb-4 leading-tight max-w-5xl mx-auto">
             Replace Data Entry Workflows
             <br />
@@ -418,9 +420,14 @@ export default function LandingPage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-lg font-bold text-brand">Mailroom</span>
-          <p className="text-sm text-muted-foreground">
-            Document workflow automation for modern teams
-          </p>
+          <div className="text-center sm:text-right">
+            <p className="text-sm text-muted-foreground">
+              Document workflow automation for modern teams
+            </p>
+            <p className="text-xs text-muted-foreground/80">
+              © {new Date().getFullYear()} Mailroom. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
