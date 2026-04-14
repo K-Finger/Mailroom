@@ -3,45 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Upload, Sparkles, Download, Check, X, FileText, GitBranch, Zap, Bookmark, BookOpen } from "lucide-react";
-
-// Step connector
-function StepConnector() {
-  return (
-    <div className="hidden md:flex items-center justify-center w-12">
-      <div className="h-px w-full bg-gradient-to-r from-border via-brand/50 to-border" />
-    </div>
-  );
-}
-
-// How it works step
-function HowItWorksStep({
-  icon: Icon,
-  title,
-  description,
-  step,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  step: number;
-}) {
-  return (
-    <div className="flex flex-col items-center text-center group">
-      <div className="relative mb-4">
-        <div className="absolute inset-0 bg-brand/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-card border border-border group-hover:border-brand/50 transition-colors duration-300">
-          <Icon className="w-7 h-7 text-brand" />
-        </div>
-        <span className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 rounded-full bg-brand text-brand-foreground text-xs font-bold">
-          {step}
-        </span>
-      </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-[200px]">{description}</p>
-    </div>
-  );
-}
+import { ArrowRight, Sparkles, Download, Check, X, GitBranch, Zap, Bookmark, BookOpen } from "lucide-react";
 
 // Feature card
 function FeatureCard({
@@ -146,17 +108,6 @@ function AppPreview() {
   );
 }
 
-// Value prop pill
-function ValueProp({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand/10">
-        <Check className="w-4 h-4 text-brand" />
-      </div>
-      <span className="text-sm font-medium">{children}</span>
-    </div>
-  );
-}
 
 export default function LandingPage() {
   return (
@@ -330,7 +281,7 @@ export default function LandingPage() {
             With <em className="italic text-white/95 font-serif tracking-[-0.04em]">AI Automated Pipelines</em>
           </h1>
           <p className="text-lg sm:text-xl text-white/75 max-w-2xl mx-auto mb-10">
-            Upload documents, extract the data that matters, validate it automatically, and export to spreadsheets — in seconds, not hours.
+            Upload documents, extract the data that matters, validate it automatically, and export to spreadsheets. In seconds, not hours.
           </p>
           <div className="flex items-center justify-center">
             <Link
@@ -680,7 +631,7 @@ export default function LandingPage() {
             <p className="text-lg text-muted-foreground">Customize workflows to upload documents from Google Drive or email, run an AI extract step to pull structured fields, validate the results, then download as XLSX or push directly to Google Sheets.</p>
           </div>
           <video
-            src="/demo.mp4"
+            src="https://ubbyekwquutsslqqnpkg.supabase.co/storage/v1/object/public/public-assets/demo.mp4"
             autoPlay
             muted
             loop
@@ -753,7 +704,7 @@ export default function LandingPage() {
             Get Started Now
           </h2>
           <p className="text-lg text-white/70 mb-8">
-            Sign in and start processing documents for pennies each — no subscription, no commitment.
+            Sign in and start processing documents for pennies each. No subscription, no commitment.
           </p>
           <Link
             href="/login"

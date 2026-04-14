@@ -14,6 +14,7 @@ const FEATURES = [
   { icon: FileText,    text: "All node types included" },
   { icon: FolderOpen,  text: "Google Drive source" },
   { icon: Mail,        text: "Email delivery" },
+  { icon: Zap,         text: "Early access — pricing locked in" },
 ];
 
 export default async function BillingPage({
@@ -76,9 +77,9 @@ export default async function BillingPage({
           ) : (
             <>
               <div className="text-center">
-                <p className="text-lg text-muted-foreground">Get full access to Mailroom</p>
+                <p className="text-lg text-muted-foreground">One-time beta access</p>
                 <p className="text-5xl font-bold text-blue-700 mt-2">{PRICE}</p>
-                <p className="text-sm text-muted-foreground mt-1">one-time payment</p>
+                <p className="text-sm text-muted-foreground mt-1">pay once, use forever</p>
               </div>
 
               <hr className="border-border" />
@@ -97,7 +98,7 @@ export default async function BillingPage({
                     type="submit"
                     className="w-full h-14 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
                   >
-                    Get unlimited access for {PRICE}
+                    Get beta access for {PRICE}
                   </button>
                 </form>
               </div>

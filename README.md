@@ -39,6 +39,8 @@ Manual document processing is already costing teams money. Mailroom delivers imm
 
 https://mailroom-two.vercel.app
 
+https://ubbyekwquutsslqqnpkg.supabase.co/storage/v1/object/public/public-assets/demo.mp4
+
 ---
 
 ## Data Sources
@@ -51,4 +53,7 @@ https://mailroom-two.vercel.app
 
 ## Stack
 
-Next.js · Supabase · Anthropic Claude (claude-sonnet-4-6) · Stripe · Google Drive API · Gmail API · Resend
+Next.js
+React
+Supabase
+Google APIs
