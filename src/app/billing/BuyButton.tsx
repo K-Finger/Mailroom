@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { buyCredits } from "./actions";
 
-const PRICE = "$2.99";
+const PRICE = "$1.99";
 
 export function BuyButton() {
   const [error, setError] = useState<string | null>(null);
