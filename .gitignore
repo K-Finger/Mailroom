@@ -52,3 +52,4 @@ supabase/.temp/
 
 # example/secret files
 public/source_examples/
+.env*.local
