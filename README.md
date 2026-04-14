@@ -39,7 +39,7 @@ Manual document processing is already costing teams money. Mailroom delivers imm
 
 https://mailroom-two.vercel.app
 
-https://ubbyekwquutsslqqnpkg.supabase.co/storage/v1/object/public/public-assets/demo.mp4
+[![Watch demo](https://ubbyekwquutsslqqnpkg.supabase.co/storage/v1/object/public/public-assets/Mailroom_hero.png)](https://ubbyekwquutsslqqnpkg.supabase.co/storage/v1/object/public/public-assets/demo.mp4)
 
 ---
 
