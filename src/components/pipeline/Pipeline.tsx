@@ -987,7 +987,6 @@ export function Pipeline({ user, docsThisMonth, isPaid }: { user: User | null; d
           href="/billing"
           className="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 transition-colors px-4 py-2 text-sm font-medium text-amber-950 shrink-0"
         >
-          <span>⚠️</span>
           You cannot process documents yet. Purchase access to get started.
           <span className="underline font-semibold">Go to billing</span>
         </a>

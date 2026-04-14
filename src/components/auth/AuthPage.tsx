@@ -49,7 +49,6 @@ export function AuthPage({ error, initialMode = "signin" }: { error?: string; in
             <GoogleSignInButton />
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
-            <span className="text-base">⚠️</span>
             <span><strong>New Google accounts are temporarily unavailable</strong> pending OAuth verification. Existing users can still sign in with Google.</span>
           </div>
           <div className="flex items-center gap-3 my-1">
