@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BuyButton } from "./BuyButton";
 import { HeroBg } from "@/components/HeroBg";
 
-const PRICE = "$2.99";
+const PRICE = "$1.99";
 
 const FEATURES = [
   { icon: Layers,      text: "Unlimited document runs" },
