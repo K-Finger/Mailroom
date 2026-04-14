@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/prep-build.js && next build",
+  "buildCommand": "node scripts/prep-build.js && NODE_OPTIONS=--max-old-space-size=4096 next build",
   "crons": [
     {
       "path": "/api/cron/drive-watch",
