@@ -30,23 +30,29 @@ async function getOrCreateCustomer(userId: string, email: string): Promise<strin
   return customer.id;
 }
 
-export async function buyCredits() {
+export async function buyCredits(): Promise<{ error: string } | never> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const customerId = await getOrCreateCustomer(user.id, user.email!);
+  try {
+    const customerId = await getOrCreateCustomer(user.id, user.email!);
 
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: "payment",
-    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-    success_url: `${APP_URL}/billing?success=true`,
-    cancel_url: `${APP_URL}/billing`,
-    metadata: {
-      supabase_user_id: user.id,
-    },
-  });
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "payment",
+      line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+      success_url: `${APP_URL}/billing?success=true`,
+      cancel_url: `${APP_URL}/billing`,
+      metadata: {
+        supabase_user_id: user.id,
+      },
+    });
 
-  redirect(session.url!);
+    redirect(session.url!);
+  } catch (err) {
+    if ((err as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw err;
+    console.error("Stripe error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to create checkout session" };
+  }
 }

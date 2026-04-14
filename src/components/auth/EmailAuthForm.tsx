@@ -14,20 +14,19 @@ export function EmailAuthForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
 
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
       } else {
-        setSuccess("Check your email to confirm your account.");
+        router.push("/pipeline");
+        router.refresh();
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -65,9 +64,6 @@ export function EmailAuthForm() {
         {error && (
           <p className="text-sm text-destructive">{error}</p>
         )}
-        {success && (
-          <p className="text-sm text-green-600">{success}</p>
-        )}
         <Button
           type="submit"
           disabled={loading}
@@ -80,7 +76,7 @@ export function EmailAuthForm() {
         {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
         <button
           type="button"
-          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setSuccess(null); }}
+          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); }}
           className="text-blue-600 hover:underline font-medium"
         >
           {mode === "signin" ? "Sign up" : "Sign in"}

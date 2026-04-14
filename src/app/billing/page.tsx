@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CheckCircle2, ArrowLeft, Zap, FileText, Mail, FolderOpen, Layers } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
-import { buyCredits } from "./actions";
+import { BuyButton } from "./BuyButton";
 
 const PRICE = "$2.99";
 
@@ -93,14 +93,7 @@ export default async function BillingPage({
                     </li>
                   ))}
                 </ul>
-                <form action={buyCredits}>
-                  <button
-                    type="submit"
-                    className="w-full h-14 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
-                  >
-                    Get beta access for {PRICE}
-                  </button>
-                </form>
+                <BuyButton />
               </div>
             </>
           )}

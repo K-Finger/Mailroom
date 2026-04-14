@@ -22,7 +22,7 @@ export default async function LoginPage({
       </Link>
 
       {/* Sign in label above card */}
-      <h2 className="relative z-10 text-3xl font-semibold text-white mb-2">Sign in</h2>
+      <h2 className="relative z-10 text-3xl font-semibold text-white mb-2">Welcome</h2>
 
       {/* Card */}
       <Card className="relative z-10 w-full max-w-md border-0 shadow-2xl">
