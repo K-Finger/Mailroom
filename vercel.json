@@ -1,5 +1,4 @@
 {
-  "buildCommand": "node scripts/prep-build.js && NEXT_TELEMETRY_DEBUG=1 next build",
   "crons": [
     {
       "path": "/api/cron/drive-watch",
