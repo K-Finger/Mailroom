@@ -52,6 +52,8 @@ export function InstructionNode({ id, data }: NodeProps<PipelineNode>) {
 
   const width = d.instructionType === "extract"
     ? extractWidth((d.payload as Extract<typeof d.payload, { type: "extract" }>).text)
+    : (d.instructionType === "validator" || d.instructionType === "filter")
+    ? 320
     : 192;
 
   const toggle = useCallback(() => {

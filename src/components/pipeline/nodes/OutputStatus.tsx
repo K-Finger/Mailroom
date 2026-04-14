@@ -126,22 +126,20 @@ export function OutputStatus({ id }: { id: string }) {
               Download
             </Button>
           </a>
-          {isTable && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-4 text-xs gap-2"
-              onClick={handlePreview}
-              disabled={previewing}
-            >
-              {previewing ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : (
-                <Table2 className="size-3" />
-              )}
-              Preview
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 px-4 text-xs gap-2"
+            onClick={handlePreview}
+            disabled={previewing}
+          >
+            {previewing ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <Table2 className="size-3" />
+            )}
+            Preview
+          </Button>
         </div>
       )}
       {step === "error" && (
