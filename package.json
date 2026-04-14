@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev --webpack",
     "prebuild": "node scripts/prep-build.js",
-    "build": "next build --webpack --debug",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
