@@ -8,8 +8,8 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 import { HeroBg } from "@/components/HeroBg";
 
-export function AuthPage({ error }: { error?: string }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+export function AuthPage({ error, initialMode = "signin" }: { error?: string; initialMode?: "signin" | "signup" }) {
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
 
   const isSignup = mode === "signup";
 
@@ -47,9 +47,10 @@ export function AuthPage({ error }: { error?: string }) {
           )}
           <div className="relative">
             <GoogleSignInButton />
-            <p className="mt-2 text-xs text-center text-muted-foreground/70">
-              Google sign-in is temporarily suspended pending OAuth verification. Use email below.
-            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
+            <span className="text-base">⚠️</span>
+            <span><strong>New Google accounts are temporarily unavailable</strong> pending OAuth verification. Existing users can still sign in with Google.</span>
           </div>
           <div className="flex items-center gap-3 my-1">
             <div className="flex-1 h-px bg-border" />

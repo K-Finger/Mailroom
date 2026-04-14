@@ -246,13 +246,13 @@ export default function LandingPage() {
             </a>
             {/* Nav links - absolutely centered */}
             <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1">
-              {["How it works", "Pricing", "Features"].map((item) => (
+              {[["How it works", "how-it-works"], ["Demo", "how-it-works"], ["Features", "features"]].map(([label, id]) => (
                 <a
-                  key={item}
-                  href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+                  key={label}
+                  href={`#${id}`}
                   className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100"
                 >
-                  {item}
+                  {label}
                 </a>
               ))}
             </div>
@@ -286,7 +286,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center">
             <Link
-              href="/login"
+              href="/login?mode=signup"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-blue-700 hover:bg-white/90 h-12 px-8 text-base font-semibold transition-colors shadow-md"
             >
               Get Started
