@@ -16,7 +16,7 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail, RotateCcw } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -230,15 +230,15 @@ function WorkflowPanel({
   return (
     <div className="flex flex-col h-full border-r bg-card">
       <UsagePanel docs={docs} />
-      <div className="flex-1 overflow-y-auto px-3 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-5">
         {/* Source */}
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="text-sm font-semibold">Source</span>
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <FolderOpen className="size-5 shrink-0 text-muted-foreground" />
+          <span className="text-base font-semibold">Source</span>
         </div>
 
         {entries.length === 0 && (
-          <p className="text-xs text-muted-foreground mt-4 px-2">Connect nodes to build your workflow.</p>
+          <p className="text-sm text-muted-foreground mt-4 px-3">Connect nodes to build your workflow.</p>
         )}
 
         {entries.map((entry) => {
@@ -246,8 +246,8 @@ function WorkflowPanel({
           return (
             <div key={entry.id}>
               {/* Connector */}
-              <div className="flex items-center gap-2 px-2 py-1">
-                <ArrowDown className="size-3 shrink-0 text-muted-foreground/40" />
+              <div className="flex items-center gap-2 px-3 py-1.5">
+                <ArrowDown className="size-4 shrink-0 text-muted-foreground/40" />
                 <ShapePill shape={entry.incomingShape} error={!!entry.error} />
               </div>
 
@@ -256,7 +256,7 @@ function WorkflowPanel({
                 onClick={() => !entry.error && onSelectNode(entry.id)}
                 disabled={!!entry.error}
                 className={cn(
-                  "flex items-center gap-2 w-full text-left rounded-md px-2 py-1.5 transition-colors",
+                  "flex items-center gap-3 w-full text-left rounded-lg px-3 py-2.5 transition-colors",
                   entry.error
                     ? "cursor-default opacity-60"
                     : "hover:bg-accent cursor-pointer",
@@ -264,9 +264,9 @@ function WorkflowPanel({
                   entry.isOutput && "text-muted-foreground",
                 )}
               >
-                <Icon className={cn("size-3.5 shrink-0", entry.error ? "text-destructive" : "text-muted-foreground")} />
-                <span className="text-sm truncate">{entry.label}</span>
-                {entry.error && <AlertCircle className="size-3.5 shrink-0 text-destructive ml-auto" />}
+                <Icon className={cn("size-5 shrink-0", entry.error ? "text-destructive" : "text-muted-foreground")} />
+                <span className="text-base truncate">{entry.label}</span>
+                {entry.error && <AlertCircle className="size-5 shrink-0 text-destructive ml-auto" />}
               </button>
             </div>
           );
@@ -274,8 +274,8 @@ function WorkflowPanel({
 
         {/* Error */}
         {globalError && (
-          <div className="mt-3 mx-1 flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            <AlertCircle className="size-3.5 shrink-0 mt-0.5" />
+          <div className="mt-3 mx-1 flex items-start gap-2 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="size-5 shrink-0 mt-0.5" />
             <span>{globalError}</span>
           </div>
         )}
@@ -341,55 +341,55 @@ function NodeTray({
   return (
     <div className="border-t bg-card shrink-0">
       {/* Tab bar */}
-      <div className="flex items-center gap-1 px-3 py-2">
+      <div className="flex items-center gap-1 px-4 py-2.5">
         <button
           onClick={() => handleTab("add")}
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+            "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
             open && tab === "add" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
           )}
         >
-          <ChevronDown className={cn("size-3 transition-transform", open && tab === "add" && "rotate-180")} />
+          <ChevronDown className={cn("size-4 transition-transform", open && tab === "add" && "rotate-180")} />
           Add
         </button>
         <button
           onClick={() => handleTab("reuse")}
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+            "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
             open && tab === "reuse" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
           )}
         >
-          <BookOpen className="size-3" />
+          <BookOpen className="size-4" />
           Reuse
           {savedPipelines.length > 0 && (
-            <span className="rounded-full bg-primary/10 text-primary px-1.5 py-0 text-[10px] font-semibold">{savedPipelines.length}</span>
+            <span className="rounded-full bg-primary/10 text-primary px-1.5 py-0 text-xs font-semibold">{savedPipelines.length}</span>
           )}
         </button>
         <div className="flex-1" />
         <button
           onClick={() => setSaveDialogOpen(true)}
           disabled={disabled}
-          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
-          <Save className="size-3" />
+          <Save className="size-4" />
           Save pipeline
         </button>
       </div>
 
       {/* Panel */}
       {open && (
-        <div className="border-t px-3 py-3 overflow-x-auto">
+        <div className="border-t px-4 py-4 overflow-x-auto">
           {tab === "add" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {INSTRUCTION_TYPES.map(({ id, icon: Icon, label }) => (
                 <button
                   key={id}
                   onClick={() => onAdd(id)}
                   disabled={disabled}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                  className="flex items-center gap-3 rounded-xl border border-blue-400/50 bg-background px-5 py-3.5 hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none shrink-0"
                 >
-                  <Icon className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">{label}</span>
+                  <Icon className="size-5 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium whitespace-nowrap">{label}</span>
                 </button>
               ))}
             </div>
@@ -397,25 +397,25 @@ function NodeTray({
           {tab === "reuse" && (
             <div className="flex items-center gap-2">
               {savedPipelines.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No saved pipelines yet. Build one and hit Save.</p>
+                <p className="text-sm text-muted-foreground">No saved pipelines yet. Build one and hit Save.</p>
               ) : savedPipelines.map((p) => (
-                <div key={p.id} className="group flex items-center gap-1 rounded-lg border border-border bg-background pl-3 pr-1.5 py-1.5 shrink-0">
-                  <button onClick={() => onReuse(p)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <BookOpen className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-xs font-medium whitespace-nowrap">{p.name}</span>
+                <div key={p.id} className="group flex items-center gap-1 rounded-xl border border-border bg-background pl-5 pr-2 py-3.5 shrink-0">
+                  <button onClick={() => onReuse(p)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <BookOpen className="size-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium whitespace-nowrap">{p.name}</span>
                   </button>
-                  <div className="flex items-center gap-0.5 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => setRenaming({ id: p.id, name: p.name })}
-                      className="rounded p-1 hover:bg-accent transition-colors"
+                      className="rounded p-1.5 hover:bg-accent transition-colors"
                     >
-                      <Pencil className="size-3 text-muted-foreground" />
+                      <Pencil className="size-4 text-muted-foreground" />
                     </button>
                     <button
                       onClick={() => onDelete(p.id)}
-                      className="rounded p-1 hover:bg-destructive/10 transition-colors"
+                      className="rounded p-1.5 hover:bg-destructive/10 transition-colors"
                     >
-                      <Trash2 className="size-3 text-muted-foreground hover:text-destructive" />
+                      <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
                     </button>
                   </div>
                 </div>
@@ -778,12 +778,12 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
     <div className="flex flex-col h-full">
       {/* Shared top bar — single border-b spans full width */}
       <div className="flex items-center border-b bg-card shrink-0">
-        <div className="w-72 shrink-0 px-4 py-2 border-r">
-          <p className="text-sm font-semibold">Mailroom</p>
+        <div className="w-72 shrink-0 px-5 py-4 border-r flex items-center">
+          <h1 className="text-4xl font-bold tracking-tight text-brand">Mailroom</h1>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 flex-1">
+        <div className="flex items-center gap-3 px-5 py-4 flex-1">
           <InstructionPicker onSelect={addInstructionNode} disabled={busy} />
-          <Button size="sm" disabled={!canSubmit} onClick={handleRun}>
+          <Button disabled={!canSubmit} onClick={handleRun} className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-10 text-sm">
             {busy ? (step === "uploading" ? "Uploading..." : "Processing...") : "Run"}
           </Button>
           <div className="flex-1" />
@@ -793,11 +793,11 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => { window.location.href = "/billing"; }}>
-                <Wallet className="size-3.5" />
+                <Wallet className="size-4" />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut()}>
-                <LogOut className="size-3.5" />
+                <LogOut className="size-4" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -852,7 +852,11 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
 
         {/* Canvas + node tray — hidden while previewing or editing template */}
         <div className={cn("flex-1 min-h-0 flex flex-col", (previewData || templateEditorNodeId) && "hidden")}>
-          <div className="flex-1 min-h-0">
+          <div className={cn(
+            "flex-1 min-h-0",
+            step === "processing" && "pipeline-processing",
+            step === "done" && "pipeline-done"
+          )}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -877,7 +881,9 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
               proOptions={{ hideAttribution: true }}
             >
               <Background variant={BackgroundVariant.Dots} gap={16} size={1} className="opacity-30" />
-              <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
+              <Controls
+                className="rounded-xl! border! border-foreground/20! bg-background! shadow-md! gap-0! p-1! [&>button]:rounded-lg [&>button]:bg-transparent [&>button]:border-none! [&>button]:text-foreground [&>button]:shadow-none! [&>button]:w-10! [&>button]:h-10! [&>button]:p-2.5! [&>button_svg]:w-5! [&>button_svg]:h-5!"
+              />
               {inputFiles.length === 0 && step === "idle" && (
                 <Panel position="top-center" className="pointer-events-none mt-6">
                   <p className="text-xs text-muted-foreground bg-card/80 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-sm">
