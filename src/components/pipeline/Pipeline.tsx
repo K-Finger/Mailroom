@@ -970,14 +970,23 @@ export function Pipeline({ user, docsThisMonth, isPaid }: { user: User | null; d
               {user?.email ?? "Account"}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => { window.location.href = "/billing"; }}>
-                <Wallet className="size-4" />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => startTransition(() => signOut())}>
-                <LogOut className="size-4" />
-                Sign out
-              </DropdownMenuItem>
+              {user ? (
+                <>
+                  <DropdownMenuItem onClick={() => { window.location.href = "/billing"; }}>
+                    <Wallet className="size-4" />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => startTransition(() => signOut())}>
+                    <LogOut className="size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem onClick={() => { window.location.href = "/login"; }}>
+                  <LogOut className="size-4" />
+                  Log in
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
