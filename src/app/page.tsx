@@ -286,10 +286,10 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center">
             <Link
-              href="/login?mode=signup"
+              href="/pipeline"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-blue-700 hover:bg-white/90 h-12 px-8 text-base font-semibold transition-colors shadow-md"
             >
-              Get Started
+              Try it out
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -758,10 +758,10 @@ export default function LandingPage() {
             Sign in and start processing documents for pennies each. No subscription, no commitment.
           </p>
           <Link
-            href="/login"
+            href="/pipeline"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-blue-700 hover:bg-white/90 h-12 px-8 text-base font-semibold transition-colors shadow-md"
           >
-            Get Started
+            Try it out
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

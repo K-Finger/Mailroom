@@ -474,7 +474,7 @@ function NodeTray({
 // Pipeline
 // ---------------------------------------------------------------------------
 
-export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisMonth: number }) {
+export function Pipeline({ user, docsThisMonth, isPaid }: { user: User | null; docsThisMonth: number; isPaid: boolean }) {
   const supabase = createClient();
   const { step, jobId, error, previewData, templateEditorNodeId, setStep, setJobId, setResults, setError, setTemplateEditorNodeId } = usePipelineStore();
   const [savedPipelines, setSavedPipelines] = useState<SavedPipeline[]>([]);
@@ -980,6 +980,18 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Unpaid banner */}
+      {!isPaid && (
+        <a
+          href="/billing"
+          className="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 transition-colors px-4 py-2 text-sm font-medium text-amber-950 shrink-0"
+        >
+          <span>⚠️</span>
+          You cannot process documents yet. Purchase access to get started.
+          <span className="underline font-semibold">Go to billing</span>
+        </a>
+      )}
 
       {/* Main content */}
       <div className="flex flex-1 min-h-0">

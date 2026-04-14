@@ -9,16 +9,25 @@ export default async function PipelinePage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const { count } = await supabase
-    .from("jobs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user?.id ?? "")
-    .eq("status", "done")
-    .gte("created_at", startOfMonth.toISOString());
+  const [{ count }, { data: profile }] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user?.id ?? "")
+      .eq("status", "done")
+      .gte("created_at", startOfMonth.toISOString()),
+    supabase
+      .from("users")
+      .select("paid")
+      .eq("id", user?.id ?? "")
+      .single(),
+  ]);
+
+  const isPaid = profile?.paid ?? false;
 
   return (
     <div className="h-screen overflow-hidden">
-      <Pipeline user={user} docsThisMonth={count ?? 0} />
+      <Pipeline user={user} docsThisMonth={count ?? 0} isPaid={isPaid} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/pipeline", "/dashboard", "/billing", "/api/jobs", "/api/upload", "/api/google-drive", "/api/stripe/checkout", "/api/stripe/portal"];
+const protectedRoutes = ["/dashboard", "/billing", "/api/jobs", "/api/upload", "/api/google-drive", "/api/stripe/checkout", "/api/stripe/portal"];
 const authRoutes = ["/login", "/signup"];
 
 /** Supabase stores the session in sb-<project-ref>-auth-token (may be chunked as .0, .1, ...) */
