@@ -136,11 +136,15 @@ export async function GET(request: Request) {
 
       for (const driveFile of newFiles) {
         try {
-          // Check credits before processing
+          // Check billing before processing
           if (process.env.BILLING_ENABLED === "true") {
-            const { data: hasCredits } = await serviceClient.rpc("deduct_credit", { user_id: watcher.user_id });
-            if (!hasCredits) {
-              console.log(`User ${watcher.user_id} out of credits, skipping watcher ${watcher.id}`);
+            const { data: profile } = await serviceClient
+              .from("users")
+              .select("paid")
+              .eq("id", watcher.user_id)
+              .single();
+            if (!profile?.paid) {
+              console.log(`User ${watcher.user_id} not paid, skipping watcher ${watcher.id}`);
               break;
             }
           }

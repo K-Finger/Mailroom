@@ -1,6 +1,6 @@
 "use client";
 
-import { X, FolderOpen, Mail, Loader2, Paperclip, Eye, EyeOff } from "lucide-react";
+import { X, FolderOpen, Mail, Loader2, Paperclip, Eye, RefreshCw } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
   const files = inputFiles.map((f) => f.file);
   const [driveLoading, setDriveLoading] = useState(false);
   const [watchLoading, setWatchLoading] = useState(false);
+  const [checkLoading, setCheckLoading] = useState(false);
   const [gmailOpen, setGmailOpen] = useState(false);
   const [gmailLoading, setGmailLoading] = useState(false);
   const [gmailMessages, setGmailMessages] = useState<GmailMessage[]>([]);
@@ -110,6 +111,24 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
   const handleClearWatch = useCallback(() => {
     updateNodeData(id, { watchFolderId: undefined, watchFolderName: undefined });
   }, [id, updateNodeData]);
+
+  const handleCheckNow = useCallback(async () => {
+    setCheckLoading(true);
+    try {
+      const res = await fetch("/api/drive-watchers/check", { method: "POST" });
+      const data = await res.json() as { newFiles?: number; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Check failed");
+      if (data.newFiles && data.newFiles > 0) {
+        toast.success(`Found ${data.newFiles} new file${data.newFiles !== 1 ? "s" : ""} — processing started`);
+      } else {
+        toast.info("No new files found");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Check failed");
+    } finally {
+      setCheckLoading(false);
+    }
+  }, []);
 
   const handleGmailOpen = useCallback(async () => {
     setGmailOpen(true);
@@ -240,11 +259,22 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
           </button>
           {/* Watch folder */}
           {watchFolderId ? (
-            <div className="mt-1 flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700">
-              <Eye className="size-3 shrink-0" />
-              <span className="flex-1 truncate font-medium">{watchFolderName}</span>
-              <button type="button" onClick={handleClearWatch} className="shrink-0 hover:text-blue-900">
-                <X className="size-3" />
+            <div className="mt-1 flex flex-col gap-1">
+              <div className="flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700">
+                <Eye className="size-3 shrink-0" />
+                <span className="flex-1 truncate font-medium">{watchFolderName}</span>
+                <button type="button" onClick={handleClearWatch} className="shrink-0 hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleCheckNow}
+                disabled={checkLoading}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {checkLoading ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+                {checkLoading ? "Checking..." : "Check now"}
               </button>
             </div>
           ) : (
