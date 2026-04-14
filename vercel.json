@@ -1,4 +1,5 @@
 {
+  "buildCommand": "node -e \"const fs=require('fs');const t=JSON.parse(fs.readFileSync('tsconfig.json','utf8'));t.include=(t.include||[]).filter(p=>!p.startsWith('.next/'));t.exclude=[...new Set([...(t.exclude||[]),'.next'])];fs.writeFileSync('tsconfig.json',JSON.stringify(t,null,2));\" && next build",
   "crons": [
     {
       "path": "/api/cron/drive-watch",
