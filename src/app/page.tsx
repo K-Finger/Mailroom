@@ -725,7 +725,7 @@ export default function LandingPage() {
       {/* ── SOCIAL PROOF LOGOS ─────────────────────────── */}
       <section className="py-16 border-y border-border/50 overflow-hidden">
         <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-10 text-center px-4">
-          Trusted by teams at
+          Used by teams at
         </p>
         <div className="relative">
           <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
@@ -736,6 +736,7 @@ export default function LandingPage() {
                 { name: "Lotus", src: "/Companies/lotus.png" },
                 { name: "OTO", src: "/Companies/oto.png" },
                 { name: "UMN", src: "/Companies/umn.png" },
+                { name: "Images", src: "/Companies/images.jpg" },
               ].map(({ name, src }) => (
                 <div key={`${d}-${name}`} className="mx-10 shrink-0">
                   <Image src={src} alt={name} width={120} height={40} className="h-10 w-auto object-contain opacity-50 grayscale hover:opacity-80 hover:grayscale-0 transition-all" />
