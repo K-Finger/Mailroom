@@ -150,6 +150,7 @@
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1560px;
 
+  --animate-scroll-x: scroll-x 30s linear infinite;
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-fade-in: fade-in 0.7s ease-out forwards;
@@ -226,6 +227,16 @@
 .pipeline-done .react-flow__edge-path {
   stroke: var(--brand) !important;
   transition: stroke 0.3s ease;
+}
+
+@keyframes scroll-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes scroll-x-logos {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @keyframes edge-flow {

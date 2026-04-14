@@ -5,6 +5,7 @@ import { CheckCircle2, ArrowLeft, Zap, FileText, Mail, FolderOpen, Layers } from
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { BuyButton } from "./BuyButton";
+import { HeroBg } from "@/components/HeroBg";
 
 const PRICE = "$2.99";
 
@@ -37,7 +38,7 @@ export default async function BillingPage({
 
   return (
     <div className="relative flex min-h-screen flex-col items-center bg-linear-to-b from-blue-800 via-blue-600 to-blue-400 px-4 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(255,255,255,0.12),transparent)] pointer-events-none" />
+      <HeroBg />
 
       {/* Top nav */}
       <div className="relative z-10 w-full max-w-lg flex items-center gap-2 pt-6 pb-2">

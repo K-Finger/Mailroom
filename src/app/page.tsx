@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Sparkles, Download, Check, X, GitBranch, Zap, Bookmark, BookOpen } from "lucide-react";
+import { HeroBg } from "@/components/HeroBg";
 
 // Feature card
 function FeatureCard({
@@ -285,7 +286,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center">
             <Link
-              href="/pipeline"
+              href="/login"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-blue-700 hover:bg-white/90 h-12 px-8 text-base font-semibold transition-colors shadow-md"
             >
               Get Started
@@ -312,6 +313,31 @@ export default function LandingPage() {
             Teams still open PDFs, hunt for fields, fix formatting, and enter data by hand. Hours lost every week to repetitive work that should be automated.
           </p>
         </div>
+
+        {/* Scrolling pill tags */}
+        <div className="relative mt-10 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="flex gap-3 animate-scroll-x w-max">
+            {[
+              "Invoice Data Capture", "Data Entry", "Purchase Order Processing",
+              "Contract Review", "Expense Report Parsing", "Resume Screening",
+              "Medical Records Extraction", "Bank Statement Analysis", "Tax Form Processing",
+              "Shipping Label Reading", "Quote Comparison", "Compliance Checks",
+              "Invoice Data Capture", "Data Entry", "Purchase Order Processing",
+              "Contract Review", "Expense Report Parsing", "Resume Screening",
+              "Medical Records Extraction", "Bank Statement Analysis", "Tax Form Processing",
+              "Shipping Label Reading", "Quote Comparison", "Compliance Checks",
+            ].map((label, i) => (
+              <span
+                key={i}
+                className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 whitespace-nowrap"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── USE CASE SPOTLIGHT ─────────────────────────── */}
@@ -331,7 +357,7 @@ export default function LandingPage() {
               className="text-gray-600 text-lg"
               style={{ fontFamily: "Outfit, sans-serif" }}
             >
-              Watch how we merge multiple invoices into a single structured dataset
+              Let AI Extraction tools automatically convert PDF data into spreadsheets
             </p>
           </div>
 
@@ -696,9 +722,33 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── SOCIAL PROOF LOGOS ─────────────────────────── */}
+      <section className="py-16 border-y border-border/50 overflow-hidden">
+        <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-10 text-center px-4">
+          Trusted by teams at
+        </p>
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="flex items-center animate-scroll-x" style={{ width: "max-content" }}>
+            {[...Array(8)].flatMap((_, d) =>
+              [
+                { name: "Lotus", src: "/Companies/lotus.png" },
+                { name: "OTO", src: "/Companies/oto.png" },
+                { name: "UMN", src: "/Companies/umn.png" },
+              ].map(({ name, src }) => (
+                <div key={`${d}-${name}`} className="mx-10 shrink-0">
+                  <Image src={src} alt={name} width={120} height={40} className="h-10 w-auto object-contain opacity-50 grayscale hover:opacity-80 hover:grayscale-0 transition-all" />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ──────────────────────────────────── */}
-      <section className="relative py-24 px-4 overflow-hidden bg-linear-to-b from-blue-700 to-blue-900">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,255,255,0.08),transparent)] pointer-events-none" />
+      <section className="relative py-24 px-4 overflow-hidden bg-blue-800">
+        <HeroBg />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
             Get Started Now

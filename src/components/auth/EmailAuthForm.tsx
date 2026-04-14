@@ -6,10 +6,20 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function EmailAuthForm() {
+interface EmailAuthFormProps {
+  mode?: "signin" | "signup";
+  onModeChange?: (mode: "signin" | "signup") => void;
+}
+
+export function EmailAuthForm({ mode: controlledMode, onModeChange }: EmailAuthFormProps = {}) {
   const router = useRouter();
   const supabase = createClient();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [internalMode, setInternalMode] = useState<"signin" | "signup">("signin");
+  const mode = controlledMode ?? internalMode;
+  const setMode = (m: "signin" | "signup") => {
+    setInternalMode(m);
+    onModeChange?.(m);
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
