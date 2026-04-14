@@ -130,30 +130,17 @@ function AppPreview() {
   return (
     <div
       ref={ref}
-      className="relative w-full max-w-4xl mx-auto opacity-0 translate-y-8 transition-all duration-700 ease-out [&.animate-in]:opacity-100 [&.animate-in]:translate-y-0"
+      className="relative w-full max-w-6xl mx-auto opacity-0 translate-y-8 transition-all duration-700 ease-out [&.animate-in]:opacity-100 [&.animate-in]:translate-y-0"
     >
-      <div className="rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white/20">
-        {/* Window chrome */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1e1e2e]">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80" />
-          </div>
-          <span className="text-xs font-semibold text-white/60 ml-2 tracking-wide">Mailroom — Invoice Pipeline</span>
-        </div>
-
-        {/* Hero splash screenshot */}
-        <div className="bg-[#0f0f17]">
-          <Image
-            src="/hero_splash.png"
-            alt="Mailroom app"
-            width={1200}
-            height={700}
-            className="w-full h-auto block"
-            priority
-          />
-        </div>
+      <div className="rounded-4xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white/20">
+        <Image
+          src="/hero_splash.png"
+          alt="Mailroom app"
+          width={1200}
+          height={700}
+          className="w-full h-auto block"
+          priority
+        />
       </div>
     </div>
   );
@@ -175,7 +162,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ── HERO (blue) ─────────────────────────────────── */}
-      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-400 overflow-hidden pb-0">
+      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-500 overflow-hidden pb-0">
         {/* subtle radial glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(255,255,255,0.12),transparent)] pointer-events-none" />
 
@@ -183,13 +170,13 @@ export default function LandingPage() {
         <nav className="fixed top-4 left-0 right-0 z-50 flex items-center justify-center px-6">
           <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg w-full max-w-3xl border border-blue-600">
             {/* Logo - left */}
-            <div className="flex items-center gap-2 pl-1 shrink-0">
-              <img src="/logo.svg" alt="" className="h-5 w-auto shrink-0" />
+            <a href="#hero" className="flex items-center gap-2 pl-1 shrink-0">
+              <Image src="/logo.svg" alt="" width={20} height={20} className="h-5 w-auto shrink-0" />
               <span className="text-xl font-bold text-blue-700 tracking-tight">Mailroom</span>
-            </div>
+            </a>
             {/* Nav links - absolutely centered */}
             <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1">
-              {["Features", "How it works", "Pricing"].map((item) => (
+              {["How it works", "Pricing", "Features"].map((item) => (
                 <a
                   key={item}
                   href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -218,7 +205,7 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero text */}
-        <div className="relative z-10 max-w-6xl mx-auto text-center px-4 pt-32 pb-14">
+        <div id="hero" className="relative z-10 max-w-6xl mx-auto text-center px-4 pt-32 pb-14">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-medium tracking-tighter text-white mb-4 leading-tight max-w-5xl mx-auto">
             Replace Data Entry Workflows
             <br />
@@ -241,6 +228,8 @@ export default function LandingPage() {
         {/* App preview — sits at bottom of hero, slightly overlapping next section */}
         <div className="relative z-10 px-4 md:px-8 pb-0">
           <AppPreview />
+          <div className="pointer-events-none absolute inset-0 mt-80 bg-linear-to-b from-transparent to-white" />
+          <div className="pointer-events-none absolute inset-0 mt-90 bg-linear-to-b from-transparent to-white" />
         </div>
       </section>
 
@@ -421,9 +410,14 @@ export default function LandingPage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-lg font-bold text-brand">Mailroom</span>
-          <p className="text-sm text-muted-foreground">
-            Document workflow automation for modern teams
-          </p>
+          <div className="text-center sm:text-right">
+            <p className="text-sm text-muted-foreground">
+              Document workflow automation for modern teams
+            </p>
+            <p className="text-xs text-muted-foreground/80">
+              © {new Date().getFullYear()} Mailroom. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
