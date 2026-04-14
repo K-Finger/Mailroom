@@ -9,6 +9,7 @@ export async function downloadFile(path: string): Promise<Uint8Array> {
   return new Uint8Array(await data.arrayBuffer());
 }
 
+// HELPERS
 /** Extract plain text from a file based on its extension. */
 export async function fileToText(bytes: Uint8Array, name: string): Promise<string> {
   const lower = name.toLowerCase();
