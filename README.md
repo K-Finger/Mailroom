@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mailroom
 
-## Getting Started
+**AI-powered document workflow automation — from raw files to structured data, end to end.**
 
-First, run the development server:
+![Mailroom](public/Mailroom_hero.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## The Problem
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Document data entry is one of the most common and most painful manual workflows in business. Teams receive invoices, forms, and reports as PDFs or spreadsheets, then manually open each file, find the relevant fields, and copy them into a spreadsheet. It's repetitive, error-prone, and time-consuming — and it hasn't been automated because existing tools (n8n, Zapier, OCR software) require significant technical setup and aren't built specifically for document extraction.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+According to McKinsey, data entry and document processing account for a significant share of avoidable administrative time across finance, logistics, legal, and operations teams. Workers spend an estimated 1.8 hours per day on tasks that could be automated.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## The Solution
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Mailroom replaces this workflow end-to-end. Users drop files onto a canvas, chain AI-powered steps, and get structured data out — no code required.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The full workflow:
 
-## Deploy on Vercel
+1. **Source** — upload files directly, pull from a Google Drive folder, or capture from email
+2. **Extract** — Claude reads each document and pulls exactly the fields you specify, regardless of layout or format
+3. **Validate** — flag rows that fail your rules before they reach the spreadsheet
+4. **Export** — download as XLSX/CSV or push directly to Google Sheets
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Pipelines are saved and reusable. Drive and email listeners trigger pipelines automatically when new files arrive. The same pipeline that processes one invoice processes a thousand.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Why someone would pay for this today
+
+Manual document processing is already costing teams money. Mailroom delivers immediate, measurable time savings on a workflow every business has. It is priced at a one-time flat fee ($2.99) with no subscription — low enough to buy on the spot, high enough to signal real value.
+
+---
+
+## Demo
+
+https://mailroom-two.vercel.app
+
+---
+
+## Data Sources
+
+- McKinsey Global Institute — *The social and economic impact of artificial intelligence* (2023): estimate that 60%+ of jobs have at least 30% automatable activities, with data collection and processing as the primary category
+- APQC benchmarking data on accounts payable processing time per invoice: average 4.1 days manual vs. near-real-time automated
+- Zapier State of Business Automation (2022): 76% of workers say they spend 1–3 hours daily on repetitive tasks
+
+---
+
+## Stack
+
+Next.js · Supabase · Anthropic Claude (claude-sonnet-4-6) · Stripe · Google Drive API · Gmail API · Resend

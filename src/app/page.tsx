@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Upload, Sparkles, ShieldCheck, Download, Check, X, FileText, Table2, Clock, Users } from "lucide-react";
+import { ArrowRight, Upload, Sparkles, Download, Check, X, FileText, GitBranch, Zap, Bookmark, BookOpen } from "lucide-react";
 
 // Step connector
 function StepConnector() {
@@ -313,7 +313,7 @@ export default function LandingPage() {
                 Login
               </Link>
               <Link
-                href="/pipeline"
+                href="/login"
                 className="inline-flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 h-8 px-4 text-sm font-semibold transition-colors"
               >
                 Sign Up
@@ -363,29 +363,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ───────────────────────────────── */}
-      <section id="how-it-works" className="py-20 px-4 bg-accent/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">How it works</h2>
-            <p className="text-lg text-muted-foreground">Four steps from document to spreadsheet</p>
-          </div>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-center gap-6 md:gap-0">
-            <HowItWorksStep icon={Upload} title="Upload" description="Drop invoices, forms, or any PDF documents" step={1} />
-            <StepConnector />
-            <HowItWorksStep icon={Sparkles} title="Extract" description="AI pulls the fields that matter from your documents" step={2} />
-            <StepConnector />
-            <HowItWorksStep icon={ShieldCheck} title="Validate" description="Catch missing or suspicious values before export" step={3} />
-            <StepConnector />
-            <HowItWorksStep icon={Download} title="Export" description="Get clean, spreadsheet-ready data instantly" step={4} />
-          </div>
-        </div>
-      </section>
-
       {/* ── USE CASE SPOTLIGHT ─────────────────────────── */}
-      {/* PDF to Excel Example Section */}
       <section className="px-8 py-20">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-brand text-sm font-medium mb-4">
           Use case spotlight
@@ -404,18 +384,18 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center gap-8 overflow-visible">
-            {/* Multiple PDF Invoices Stacked - Horizontally Offset */}
-            <div className="flex-1 w-full relative overflow-visible" style={{ minHeight: '650px' }}>
-              <div className="flex items-start relative" style={{ marginLeft: '-170px' }}>
+          <div className="grid items-center gap-6" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+            {/* Multiple PDF Invoices Stacked */}
+            <div className="flex justify-end pr-10">
+            <div className="relative shrink-0" style={{ width: '384px', height: '420px' }}>
                 {/* Invoice 2 (left/back) - INV-10013 */}
-                <div className="absolute left-0 top-0 w-96 z-10">
+                <div className="absolute inset-0 w-96 z-10" style={{ transform: 'translate(-18px, 14px) rotate(-2deg)' }}>
                   <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 text-xs">
                     {/* Header */}
                     <div className="flex justify-between mb-6">
                       <div>
                         <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>INVOICE</h3>
-                        <div className="text-[10px] text-gray-500" style={{ fontFamily: "Outfit, sans-serif" }}>Click to edit</div>
+                        <div className="text-[10px] text-gray-400" style={{ fontFamily: "Outfit, sans-serif" }}>Acme Corp · 2021</div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-sm" style={{ fontFamily: "Outfit, sans-serif" }}>ACME CORP</div>
@@ -480,6 +460,13 @@ export default function LandingPage() {
                           </div>
                           <div className="col-span-5 text-right font-mono font-semibold">$179.99</div>
                         </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>USB Hub</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$39.99</div>
+                        </div>
                       </div>
                     </div>
 
@@ -490,13 +477,13 @@ export default function LandingPage() {
                 </div>
 
                 {/* Invoice 1 (right/front) - INV-10012 - Fully visible */}
-                <div className="absolute left-64 top-0 w-96 z-20">
+                <div className="absolute inset-0 w-96 z-20">
                   <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 text-xs">
                     {/* Header */}
                     <div className="flex justify-between mb-6">
                       <div>
                         <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>INVOICE</h3>
-                        <div className="text-[10px] text-gray-500" style={{ fontFamily: "Outfit, sans-serif" }}>Click to edit</div>
+                        <div className="text-[10px] text-gray-400" style={{ fontFamily: "Outfit, sans-serif" }}>Acme Corp · 2021</div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-sm" style={{ fontFamily: "Outfit, sans-serif" }}>ACME CORP</div>
@@ -576,12 +563,12 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+            </div>
             </div>
 
             {/* Arrow */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <div className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg" style={{ fontFamily: "Outfit, sans-serif" }}>
+              <div className="text-blue-600 font-medium text-sm px-4 py-2 rounded-lg bg-blue-50 border border-blue-300" style={{ fontFamily: "Outfit, sans-serif" }}>
                 AI Extract →
               </div>
               <div className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>
@@ -590,7 +577,7 @@ export default function LandingPage() {
             </div>
 
             {/* Excel Sheet Mockup */}
-            <div className="flex-1 w-full">
+            <div className="min-w-0 pl-10">
               <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
                 <div className="bg-green-600 text-white px-4 py-2 flex items-center gap-2">
                   <div className="w-5 h-5 bg-white/20 rounded"></div>
@@ -611,7 +598,7 @@ export default function LandingPage() {
                       {/* Header Row */}
                       <tr className="bg-white">
                         <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>1</td>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Product</th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200 w-32" style={{ fontFamily: "JetBrains Mono, monospace" }}>Product</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Price</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Invoice#</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Date</th>
@@ -685,11 +672,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ───────────────────────────────── */}
+      <section id="how-it-works" className="py-20 px-4 bg-accent/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4"><span className="text-brand">Mailroom</span> in action</h2>
+            <p className="text-lg text-muted-foreground">Customize workflows to upload documents from Google Drive or email, run an AI extract step to pull structured fields, validate the results, then download as XLSX or push directly to Google Sheets.</p>
+          </div>
+          <video
+            src="/demo.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full mx-auto rounded-2xl shadow-2xl"
+          />
+        </div>
+      </section>
+
       {/* ── COMPARISON TABLE ───────────────────────────── */}
       <section id="pricing" className="py-20 px-4 bg-accent/30">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why Mailroom?</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why <span className="text-brand">Mailroom</span>?</h2>
             <p className="text-lg text-muted-foreground">Built specifically for document workflows, not generic automation</p>
           </div>
           <div className="overflow-x-auto">
@@ -730,27 +735,12 @@ export default function LandingPage() {
             <p className="text-lg text-muted-foreground">Powerful features for document automation</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard icon={Sparkles} title="AI Extraction" description="Intelligent field extraction powered by Claude. Understands context, not just patterns." />
-            <FeatureCard icon={ShieldCheck} title="Validation Rules" description="Define rules to catch errors before they reach your spreadsheet. Required fields, ranges, formats." />
-            <FeatureCard icon={Table2} title="Template Matching" description="Create templates for consistent extraction. Map fields exactly where you need them." />
+            <FeatureCard icon={Sparkles} title="AI Extraction" description="Intelligent field extraction powered by AI. Understands full file contexts and messy data." />
+            <FeatureCard icon={GitBranch} title="Customizable Workflows" description="Develop custom pipelines for any document workflow you encounter." />
+            <FeatureCard icon={Zap} title="End-to-End" description="Set up listeners in email and Google Drive to automatically capture relevant data." />
             <FeatureCard icon={Download} title="Flexible Export" description="Download as XLSX, CSV, or push directly to Google Sheets. Your data, your format." />
-            <FeatureCard icon={Clock} title="Real-time Processing" description="Watch your documents process in real-time. No waiting, no refreshing." />
-            <FeatureCard icon={Users} title="Team Ready" description="Invite your team, share pipelines, and collaborate on document workflows." />
-          </div>
-        </div>
-      </section>
-
-      {/* ── VALUE PROPS ────────────────────────────────── */}
-      <section className="py-20 px-4 bg-accent/30">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why teams choose Mailroom</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <ValueProp>Replace manual data entry</ValueProp>
-            <ValueProp>Extract and structure data automatically</ValueProp>
-            <ValueProp>Catch errors before export</ValueProp>
-            <ValueProp>Go from PDF to spreadsheet in seconds</ValueProp>
+            <FeatureCard icon={BookOpen} title="Create Templates" description="Build reusable extraction templates that define exactly which fields to pull from any document type." />
+            <FeatureCard icon={Bookmark} title="Save Pipelines" description="Save pipelines to your account for reuse across any document workflow." />
           </div>
         </div>
       </section>
@@ -760,16 +750,16 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,255,255,0.08),transparent)] pointer-events-none" />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
-            Stop retyping. Start processing.
+            Get Started Now
           </h2>
           <p className="text-lg text-white/70 mb-8">
-            See Mailroom in action. Process your first document in under a minute.
+            Sign in and start processing documents for pennies each — no subscription, no commitment.
           </p>
           <Link
-            href="/pipeline"
+            href="/login"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-blue-700 hover:bg-white/90 h-12 px-8 text-base font-semibold transition-colors shadow-md"
           >
-            Get started free
+            Get Started
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

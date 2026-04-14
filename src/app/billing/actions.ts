@@ -7,8 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-const CREDITS_PER_PACK = 50;
-
 async function getOrCreateCustomer(userId: string, email: string): Promise<string> {
   const supabase = await createClient();
   const { data: profile } = await supabase
@@ -47,7 +45,6 @@ export async function buyCredits() {
     cancel_url: `${APP_URL}/billing`,
     metadata: {
       supabase_user_id: user.id,
-      credits: String(CREDITS_PER_PACK),
     },
   });
 

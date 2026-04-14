@@ -26,9 +26,11 @@ export async function POST(request: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.mode === "payment" && session.payment_status === "paid") {
       const userId = session.metadata?.supabase_user_id;
-      const credits = parseInt(session.metadata?.credits ?? "0", 10);
-      if (userId && credits > 0) {
-        await serviceClient.rpc("add_credits", { user_id: userId, amount: credits });
+      if (userId) {
+        await serviceClient
+          .from("users")
+          .update({ paid: true })
+          .eq("id", userId);
       }
     }
   }

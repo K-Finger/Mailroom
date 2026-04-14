@@ -22,9 +22,13 @@ export async function POST(request: Request) {
   }
 
   if (process.env.BILLING_ENABLED === "true") {
-    const { data: hasCredits } = await supabase.rpc("deduct_credit", { user_id: user.id });
-    if (!hasCredits) {
-      return NextResponse.json({ error: "No credits remaining — buy more at /billing" }, { status: 402 });
+    const { data: profile } = await supabase
+      .from("users")
+      .select("paid")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.paid) {
+      return NextResponse.json({ error: "Access requires a Mailroom account — visit /billing to get started." }, { status: 402 });
     }
   }
 
