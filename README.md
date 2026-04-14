@@ -52,7 +52,8 @@ https://mailroom-two.vercel.app
 
 ## Stack
 
-Next.js
-React
-Supabase
-Google APIs
+Next.js,
+React,
+Supabase,
+Google APIs,
+Shadcn
