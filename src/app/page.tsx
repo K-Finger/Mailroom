@@ -383,50 +383,301 @@ export default function LandingPage() {
       </section>
 
       {/* ── USE CASE SPOTLIGHT ─────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-brand text-sm font-medium mb-4">
-                Use case spotlight
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Invoice capture</h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                Mailroom reads invoices, pulls the key fields, standardizes the output, and returns spreadsheet-ready data. No manual data entry required.
-              </p>
-              <ul className="space-y-3">
-                {["Vendor name & address", "Invoice number & date", "Line items & amounts", "Tax & total calculations"].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-brand/10">
-                      <Check className="w-3.5 h-3.5 text-brand" />
+      {/* PDF to Excel Example Section */}
+      <section className="px-8 py-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-brand text-sm font-medium mb-4">
+          Use case spotlight
+        </div>
+            <h2
+              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              style={{ fontFamily: "Outfit, sans-serif" }}
+            >
+              From PDF to Structured Data in Seconds
+            </h2>
+            <p
+              className="text-gray-600 text-lg"
+              style={{ fontFamily: "Outfit, sans-serif" }}
+            >
+              Watch how we merge multiple invoices into a single structured dataset
+            </p>
+          </div>
+
+          <div className="flex flex-col lg:flex-row items-center gap-8 overflow-visible">
+            {/* Multiple PDF Invoices Stacked - Horizontally Offset */}
+            <div className="flex-1 w-full relative overflow-visible" style={{ minHeight: '650px' }}>
+              <div className="flex items-start relative" style={{ marginLeft: '-170px' }}>
+                {/* Invoice 2 (left/back) - INV-10013 */}
+                <div className="absolute left-0 top-0 w-96 z-10">
+                  <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 text-xs">
+                    {/* Header */}
+                    <div className="flex justify-between mb-6">
+                      <div>
+                        <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>INVOICE</h3>
+                        <div className="text-[10px] text-gray-500" style={{ fontFamily: "Outfit, sans-serif" }}>Click to edit</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-sm" style={{ fontFamily: "Outfit, sans-serif" }}>ACME CORP</div>
+                        <div className="text-gray-600 text-[10px] mt-1" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          1234 Business Ave<br />
+                          San Francisco, CA<br />
+                          94102<br />
+                          United States<br />
+                          1-888-555-0123
+                        </div>
+                      </div>
                     </div>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-brand/10 rounded-3xl blur-2xl" />
-              <div className="relative rounded-2xl border border-border bg-card p-6 shadow-xl">
-                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-                  <FileText className="w-8 h-8 text-brand" />
-                  <div>
-                    <p className="font-semibold">Invoice_2024_001.pdf</p>
-                    <p className="text-xs text-muted-foreground">Processed in 2.3 seconds</p>
+
+                    {/* Billed To and Invoice Details */}
+                    <div className="flex justify-between mb-6 pb-4 border-b border-gray-200">
+                      <div>
+                        <div className="text-blue-600 font-semibold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Billed To</div>
+                        <div className="text-gray-700" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          Tech Solutions Inc<br />
+                          5678 Client Street<br />
+                          Austin, TX<br />
+                          78701
+                        </div>
+                      </div>
+                      <div className="text-right space-y-2">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+                          <span className="text-blue-600 font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>Date Issued</span>
+                          <span className="font-mono">15/3/2021</span>
+                          <span className="text-blue-600 font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>Invoice Number</span>
+                          <span className="font-mono">INV-10013</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <div className="mb-4">
+                      <div className="border-b-2 border-blue-600 pb-1 mb-2">
+                        <div className="grid grid-cols-12 gap-2 text-[10px] font-semibold text-blue-600" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          <div className="col-span-7">DESCRIPTION</div>
+                          <div className="col-span-5 text-right">AMOUNT</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-[10px]">
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>Mechanical Keyboard</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$159.99</div>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>Noise-Cancelling Headphones</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$299.00</div>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>4K Webcam</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$179.99</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[9px] text-gray-400 text-center" style={{ fontFamily: "Outfit, sans-serif" }}>
+                      PDF Document
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  {[
-                    { field: "Vendor", value: "Acme Corp" },
-                    { field: "Invoice #", value: "INV-2024-001" },
-                    { field: "Date", value: "2024-01-15" },
-                    { field: "Total", value: "$4,250.00" },
-                  ].map(({ field, value }) => (
-                    <div key={field} className="flex items-center justify-between py-2 px-3 rounded-lg bg-accent/50">
-                      <span className="text-sm text-muted-foreground">{field}</span>
-                      <span className="text-sm font-medium">{value}</span>
+
+                {/* Invoice 1 (right/front) - INV-10012 - Fully visible */}
+                <div className="absolute left-64 top-0 w-96 z-20">
+                  <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 text-xs">
+                    {/* Header */}
+                    <div className="flex justify-between mb-6">
+                      <div>
+                        <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>INVOICE</h3>
+                        <div className="text-[10px] text-gray-500" style={{ fontFamily: "Outfit, sans-serif" }}>Click to edit</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-sm" style={{ fontFamily: "Outfit, sans-serif" }}>ACME CORP</div>
+                        <div className="text-gray-600 text-[10px] mt-1" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          1234 Business Ave<br />
+                          San Francisco, CA<br />
+                          94102<br />
+                          United States<br />
+                          1-888-555-0123
+                        </div>
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Billed To and Invoice Details */}
+                    <div className="flex justify-between mb-6 pb-4 border-b border-gray-200">
+                      <div>
+                        <div className="text-blue-600 font-semibold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Billed To</div>
+                        <div className="text-gray-700" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          Tech Solutions Inc<br />
+                          5678 Client Street<br />
+                          Austin, TX<br />
+                          78701
+                        </div>
+                      </div>
+                      <div className="text-right space-y-2">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+                          <span className="text-blue-600 font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>Date Issued</span>
+                          <span className="font-mono">26/3/2021</span>
+                          <span className="text-blue-600 font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>Invoice Number</span>
+                          <span className="font-mono">INV-10012</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <div className="mb-4">
+                      <div className="border-b-2 border-blue-600 pb-1 mb-2">
+                        <div className="grid grid-cols-12 gap-2 text-[10px] font-semibold text-blue-600" style={{ fontFamily: "Outfit, sans-serif" }}>
+                          <div className="col-span-7">DESCRIPTION</div>
+                          <div className="col-span-5 text-right">AMOUNT</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-[10px]">
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>Laptop Computer</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$1,299.00</div>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>Wireless Mouse</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$49.98</div>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>USB-C Cables</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$29.97</div>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-7">
+                            <div className="font-semibold text-gray-800" style={{ fontFamily: "Outfit, sans-serif" }}>Monitor Stand</div>
+                          </div>
+                          <div className="col-span-5 text-right font-mono font-semibold">$89.00</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[9px] text-gray-400 text-center" style={{ fontFamily: "Outfit, sans-serif" }}>
+                      PDF Document
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg" style={{ fontFamily: "Outfit, sans-serif" }}>
+                AI Extract →
+              </div>
+              <div className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                2 PDFs
+              </div>
+            </div>
+
+            {/* Excel Sheet Mockup */}
+            <div className="flex-1 w-full">
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+                <div className="bg-green-600 text-white px-4 py-2 flex items-center gap-2">
+                  <div className="w-5 h-5 bg-white/20 rounded"></div>
+                  <span className="text-sm font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>invoice_data.xlsx</span>
+                </div>
+
+                <div className="overflow-x-auto bg-gray-50">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      {/* Column Letters */}
+                      <tr className="bg-gray-200">
+                        <th className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}></th>
+                        <th className="px-3 py-1 text-center text-xs font-semibold text-gray-600 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>A</th>
+                        <th className="px-3 py-1 text-center text-xs font-semibold text-gray-600 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>B</th>
+                        <th className="px-3 py-1 text-center text-xs font-semibold text-gray-600 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>C</th>
+                        <th className="px-3 py-1 text-center text-xs font-semibold text-gray-600 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>D</th>
+                      </tr>
+                      {/* Header Row */}
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>1</td>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Product</th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Price</th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Invoice#</th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-800 bg-blue-50 border border-gray-300 cursor-pointer hover:bg-blue-100 active:bg-blue-200" style={{ fontFamily: "JetBrains Mono, monospace" }}>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Items from Invoice INV-10012 */}
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>2</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>Laptop Computer</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$1,299.00</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10012</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">26/3/2021</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>3</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>Wireless Mouse</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$49.98</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10012</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">26/3/2021</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>4</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>USB-C Cables</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$29.97</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10012</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">26/3/2021</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>5</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>Monitor Stand</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$89.00</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10012</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">26/3/2021</td>
+                      </tr>
+
+                      {/* Items from Invoice INV-10013 */}
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>6</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>Mechanical Keyboard</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$159.99</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10013</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">15/3/2021</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>7</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>Noise-Cancelling Headphones</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$299.00</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10013</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">15/3/2021</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="w-10 px-2 py-1 text-center text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300" style={{ fontFamily: "JetBrains Mono, monospace" }}>8</td>
+                        <td className="px-3 py-2 border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>4K Webcam</td>
+                        <td className="px-3 py-2 font-mono border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">$179.99</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">INV-10013</td>
+                        <td className="px-3 py-2 font-mono text-sm border border-gray-300 cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors">15/3/2021</td>
+                      </tr>
+
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="bg-gray-50 px-4 py-2 border-t border-gray-200 flex justify-between items-center">
+                  <span className="text-xs text-gray-500" style={{ fontFamily: "Outfit, sans-serif" }}>7 rows extracted from 2 invoices</span>
+                  <span className="text-xs text-green-600 font-semibold" style={{ fontFamily: "Outfit, sans-serif" }}>✓ Ready to export</span>
                 </div>
               </div>
             </div>
