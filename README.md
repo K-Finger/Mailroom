@@ -1,6 +1,6 @@
 # Mailroom
 
-**AI-powered document workflow automation — from raw files to structured data, end to end.**
+**AI-powered document workflow automation. Create Customizable pipelines to streamline data extraction workflows end-to-end**
 
 ![Mailroom](public/Mailroom_hero.png)
 
