@@ -17,7 +17,7 @@ export async function pdfThumbnail(file: File, width = 200): Promise<string> {
     canvas.height = scaled.height;
 
     const ctx = canvas.getContext("2d")!;
-    await page.render({ canvasContext: ctx, viewport: scaled }).promise;
+    await page.render({ canvas, canvasContext: ctx, viewport: scaled }).promise;
     const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
 
     // Release canvas backing store

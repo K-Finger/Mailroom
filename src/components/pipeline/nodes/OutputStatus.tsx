@@ -57,12 +57,6 @@ export function OutputStatus({ id }: { id: string }) {
   const payload = (node?.data as InstructionNodeData)?.payload as Extract<InstructionPayload, { type: "output" }>;
   const tableFormat = payload?.tableFormat ?? "xlsx";
 
-  const handleReset = () => {
-    setNodes(INITIAL_NODES);
-    setEdges(INITIAL_EDGES);
-    reset();
-  };
-
   const handlePreview = async () => {
     if (!resultUrl) return;
     setPreviewing(true);
