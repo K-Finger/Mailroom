@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/drive-watch",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
