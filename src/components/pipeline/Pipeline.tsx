@@ -927,8 +927,10 @@ export function Pipeline({ user, docsThisMonth, isPaid }: { user: User | null; d
       {/* Shared top bar — single border-b spans full width */}
       <div className="flex items-center border-b bg-card shrink-0">
         <div className="w-72 shrink-0 px-5 py-4 border-r flex items-center gap-2.5">
-          <img src="/logo.svg" alt="" className="h-7 w-auto shrink-0" />
-          <h1 className="text-4xl font-bold tracking-tight text-blue-700">Mailroom</h1>
+          <a href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="" className="h-7 w-auto shrink-0" />
+            <h1 className="text-4xl font-bold tracking-tight text-blue-700">Mailroom</h1>
+          </a>
         </div>
         <div className="flex items-center gap-3 px-5 py-4 flex-1">
           <InstructionPicker onSelect={addInstructionNode} disabled={busy} />
