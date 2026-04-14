@@ -77,7 +77,7 @@ export default async function BillingPage({
           ) : (
             <>
               <div className="text-center">
-                <p className="text-lg text-muted-foreground">One-time beta access</p>
+                <p className="text-lg text-muted-foreground">One-time purchase beta access</p>
                 <p className="text-5xl font-bold text-blue-700 mt-2">{PRICE}</p>
                 <p className="text-sm text-muted-foreground mt-1">pay once, use forever</p>
               </div>

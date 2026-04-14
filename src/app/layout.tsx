@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Mailroom",
   description: "Turn messy files into clean spreadsheets",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
