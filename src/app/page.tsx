@@ -132,7 +132,7 @@ function AppPreview() {
       ref={ref}
       className="relative w-full max-w-6xl mx-auto opacity-0 translate-y-8 transition-all duration-700 ease-out [&.animate-in]:opacity-100 [&.animate-in]:translate-y-0"
     >
-      <div className="rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white/20">
+      <div className="rounded-4xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white/20">
         <Image
           src="/hero_splash.png"
           alt="Mailroom app"
