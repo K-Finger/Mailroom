@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, ArrowLeft, Zap, FileText, Mail, FolderOpen, Infinity } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Zap, FileText, Mail, FolderOpen, Layers } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { buyCredits } from "./actions";
@@ -9,7 +9,7 @@ import { buyCredits } from "./actions";
 const PRICE = "$2.99";
 
 const FEATURES = [
-  { icon: Infinity,    text: "Unlimited document runs" },
+  { icon: Layers,      text: "Unlimited document runs" },
   { icon: Zap,         text: "Unlimited pipelines" },
   { icon: FileText,    text: "All node types included" },
   { icon: FolderOpen,  text: "Google Drive source" },
