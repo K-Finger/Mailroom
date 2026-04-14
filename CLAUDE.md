@@ -42,7 +42,7 @@ Auth gate uses `src/proxy.ts` (not `middleware.ts`) with `export function proxy`
 | Framework | Next.js 16.2.3, React 19, TypeScript, App Router |
 | UI | shadcn/ui + Tailwind v4. Brand blue `oklch(0.53 0.17 250)` = `--brand`. `text-blue-700` for Mailroom wordmark. |
 | DB/Storage/Auth | Supabase (Postgres + Storage + Realtime + Auth) via `@supabase/ssr` |
-| Billing | Stripe, one-time credit packs ($2.99 / 50 runs) |
+| Billing | Stripe, one-time credit packs ($1.99 / 50 runs) |
 | AI | `@anthropic-ai/sdk`, `claude-sonnet-4-6`, structured outputs |
 | Pipeline state | Zustand `src/store/pipeline.ts` |
 | Server state | Supabase Realtime — **never TanStack Query polling** |
@@ -146,7 +146,7 @@ Credits-based, one-time purchase. No subscription.
 - **Buy**: `buyCredits()` server action → Stripe Checkout (`mode: "payment"`) → success redirect to `/billing?success=true`
 - **Webhook** (`/api/stripe/webhook`): only handles `checkout.session.completed` with `payment_status === "paid"` → calls `supabase.rpc("add_credits", { user_id, amount })`
 - **Job gate** (`/api/jobs`): when `BILLING_ENABLED=true`, calls `supabase.rpc("deduct_credit", { user_id })` — returns false if no credits → 402
-- **Billing page** (`/billing`): shows current credit balance + "Buy 50 runs for $2.99" button. Same blue gradient as login page.
+- **Billing page** (`/billing`): shows current credit balance + "Buy 50 runs for $1.99" button. Same blue gradient as login page.
 
 No meter events, no portal, no subscription status fields.
 
@@ -183,7 +183,7 @@ Migrations are applied to local DB via MCP. For a **separate production project*
 
 ### 2. Stripe setup (live mode)
 1. Create account → switch to **live mode**
-2. Products → create a Product → add a **one-time** Price (not recurring) for $2.99 → copy `price_xxx`
+2. Products → create a Product → add a **one-time** Price (not recurring) for $1.99 → copy `price_xxx`
 3. Developers → API keys → copy `sk_live_xxx`
 4. Webhooks → Add endpoint → URL: `https://yourdomain.com/api/stripe/webhook`
    Events to select: `checkout.session.completed` (only this one needed)
