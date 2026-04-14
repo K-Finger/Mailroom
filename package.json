@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev",
     "prebuild": "node scripts/prep-build.js",
-    "build": "next build --webpack",
+    "build": "next build --webpack --debug",
     "start": "next start",
     "lint": "eslint"
   },
