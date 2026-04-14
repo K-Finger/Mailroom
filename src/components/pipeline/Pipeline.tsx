@@ -16,7 +16,7 @@ import {
   type ReactFlowInstance,
   type NodeMouseHandler,
 } from "@xyflow/react";
-import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail } from "lucide-react";
+import { AlertCircle, ArrowDown, FolderOpen, Sparkles, Table2, FileText, Download, Layers, Wallet, Zap, ChevronDown, BookOpen, LogOut, Save, Pencil, Trash2, ShieldCheck, Sheet, Filter, Mail, Eye, EyeOff, Trash } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -464,6 +464,7 @@ function NodeTray({
           </form>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
@@ -599,11 +600,14 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
   const [, startTransition] = useTransition();
   const busy = step === "uploading" || step === "processing";
   const sourceNode = nodes.find((n) => n.id === "source");
-  const inputFiles = useMemo(
-    () => (sourceNode?.data as SourceNodeData)?.inputFiles ?? [],
-    [sourceNode?.data],
-  );
+  const sourceData = sourceNode?.data as SourceNodeData | undefined;
+  const inputFiles = useMemo(() => sourceData?.inputFiles ?? [], [sourceData]);
+  const watchFolderId = sourceData?.watchFolderId;
+  const watchFolderName = sourceData?.watchFolderName;
   const canSubmit = inputFiles.length > 0 && !busy && step !== "done";
+  const [watchSaving, setWatchSaving] = useState(false);
+  const [watchersOpen, setWatchersOpen] = useState(false);
+  const [watchers, setWatchers] = useState<Array<{ id: string; folder_name: string; enabled: boolean; last_checked_at: string | null }>>([]);
 
   // Toast once when a job transitions to error state
   const prevStep = useRef(step);
@@ -775,6 +779,122 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
     }
   }, [canSubmit, nodes, edges, inputFiles, supabase, setStep, setError, setJobId]);
 
+  const handleSaveWatch = useCallback(async () => {
+    if (!watchFolderId || !watchFolderName) return;
+    setWatchSaving(true);
+    try {
+      const orderedNodes = getOrderedSteps(nodes, edges);
+      const validation = validatePipeline(orderedNodes);
+      if (!validation.valid) throw new Error(validation.error);
+
+      // Upload any template files
+      const templateFiles: { stepIndex: number; file: File }[] = [];
+      orderedNodes.forEach((node, i) => {
+        const data = node.data as InstructionNodeData;
+        if (data.instructionType === "extract") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "extract" }>;
+          if (payload.templateData && !payload.file?.file) {
+            const { columns, rows } = payload.templateData;
+            const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+            const csv = [
+              columns.map(escape).join(","),
+              ...rows.map((row) => columns.map((col) => escape(row[col] ?? "")).join(",")),
+            ].join("\n");
+            templateFiles.push({ stepIndex: i, file: new File([csv], "template.csv", { type: "text/csv" }) });
+          } else if (payload.file?.file) {
+            templateFiles.push({ stepIndex: i, file: payload.file.file });
+          }
+        } else if (data.instructionType === "csv-parser") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "csv-parser" }>;
+          if (payload.file?.file) templateFiles.push({ stepIndex: i, file: payload.file.file });
+        }
+      });
+
+      const templatePaths = new Map<number, string>();
+      if (templateFiles.length > 0) {
+        const presignRes = await fetch("/api/upload/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ files: templateFiles.map((t) => ({ name: t.file.name, type: t.file.type })) }),
+        });
+        if (!presignRes.ok) throw new Error("Failed to get upload URLs");
+        const { files: signed } = await presignRes.json() as { files: Array<{ name: string; path: string; token: string }> };
+        await Promise.all(
+          templateFiles.map((t, i) =>
+            supabase.storage.from("source-files").uploadToSignedUrl(signed[i].path, signed[i].token, t.file, { contentType: t.file.type })
+          )
+        );
+        templateFiles.forEach((t, i) => templatePaths.set(t.stepIndex, signed[i].path));
+      }
+
+      const pipelineSteps: PipelineStep[] = orderedNodes.map((node, i) => {
+        const data = node.data as InstructionNodeData;
+        const stepType = data.instructionType as StepType;
+        const config: PipelineStep["config"] = {};
+        if (stepType === "extract") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "extract" }>;
+          if (payload.text) config.prompt = payload.text;
+          if (templatePaths.has(i)) config.templatePath = templatePaths.get(i);
+          config.outputFormat = payload.outputFormat;
+        } else if (stepType === "csv-parser") {
+          if (templatePaths.has(i)) config.templatePath = templatePaths.get(i);
+        } else if (stepType === "merge") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "merge" }>;
+          config.fileType = payload.fileType;
+        } else if (stepType === "output") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "output" }>;
+          config.nodeId = node.id;
+          config.tableFormat = payload.tableFormat;
+        } else if (stepType === "google-sheets") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "google-sheets" }>;
+          config.nodeId = node.id;
+          config.sheetId = payload.sheetId ?? undefined;
+          config.sheetTab = payload.sheetTab;
+        } else if (stepType === "validator") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "validator" }>;
+          config.rules = payload.rules;
+        } else if (stepType === "filter") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "filter" }>;
+          config.filterRules = payload.rules;
+        } else if (stepType === "email") {
+          const payload = data.payload as Extract<InstructionPayload, { type: "email" }>;
+          config.nodeId = node.id;
+          config.emailTo = payload.to;
+          config.emailSubject = payload.subject;
+          config.emailBody = payload.body;
+          config.emailFormat = payload.format;
+        }
+        return { type: stepType, config };
+      });
+
+      const res = await fetch("/api/drive-watchers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId: watchFolderId, folderName: watchFolderName, pipelineSteps }),
+      });
+      if (!res.ok) throw new Error("Failed to save watcher");
+      toast.success(`Watching "${watchFolderName}" — new files will run automatically`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save watcher");
+    } finally {
+      setWatchSaving(false);
+    }
+  }, [watchFolderId, watchFolderName, nodes, edges, supabase]);
+
+  const handleOpenWatchers = useCallback(async () => {
+    const res = await fetch("/api/drive-watchers");
+    if (res.ok) {
+      const { watchers: list } = await res.json() as { watchers: typeof watchers };
+      setWatchers(list);
+    }
+    setWatchersOpen(true);
+  }, []);
+
+  const handleDeleteWatcher = useCallback(async (id: string) => {
+    await fetch(`/api/drive-watchers/${id}`, { method: "DELETE" });
+    setWatchers((prev) => prev.filter((w) => w.id !== id));
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       {/* Shared top bar — single border-b spans full width */}
@@ -788,7 +908,26 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
           <Button disabled={!canSubmit} onClick={handleRun} className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-10 text-sm">
             {busy ? (step === "uploading" ? "Uploading..." : "Processing...") : "Run"}
           </Button>
+          {watchFolderId && (
+            <Button
+              variant="outline"
+              onClick={handleSaveWatch}
+              disabled={watchSaving || busy}
+              className="h-10 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
+            >
+              <Eye className="size-4" />
+              {watchSaving ? "Saving..." : "Save watch"}
+            </Button>
+          )}
           <div className="flex-1" />
+          <button
+            type="button"
+            onClick={handleOpenWatchers}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Eye className="size-3.5" />
+            Watchers
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none">
               {user?.email ?? "Account"}
@@ -907,6 +1046,46 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
         </div>
         </div>
       </div>
+
+      {/* Watchers dialog */}
+      <Dialog open={watchersOpen} onOpenChange={setWatchersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="size-4" />
+              Drive watchers
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {watchers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No watchers yet. Pick a folder in the Source node and click &quot;Save watch&quot;.
+              </p>
+            ) : (
+              watchers.map((w) => (
+                <div key={w.id} className="flex items-center gap-3 rounded-lg border px-4 py-3">
+                  <Eye className="size-4 text-blue-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{w.folder_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {w.last_checked_at
+                        ? `Last checked ${new Date(w.last_checked_at).toLocaleString()}`
+                        : "Not checked yet"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteWatcher(w.id)}
+                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash className="size-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

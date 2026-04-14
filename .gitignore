@@ -40,3 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 package-lock.json
+
+# local tooling
+.agents/
+.vscode/
+.claude/
+skills-lock.json
+desktop.ini
+supabase.exe
+supabase/.temp/
+
+# example/secret files
+public/source_examples/

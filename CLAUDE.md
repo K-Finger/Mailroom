@@ -40,9 +40,9 @@ Auth gate uses `src/proxy.ts` (not `middleware.ts`) with `export function proxy`
 | Layer | Choice |
 |---|---|
 | Framework | Next.js 16.2.3, React 19, TypeScript, App Router |
-| UI | shadcn/ui + Tailwind v4. Brand green `#217346` = `--primary` |
+| UI | shadcn/ui + Tailwind v4. Brand blue `oklch(0.53 0.17 250)` = `--brand`. `text-blue-700` for Mailroom wordmark. |
 | DB/Storage/Auth | Supabase (Postgres + Storage + Realtime + Auth) via `@supabase/ssr` |
-| Billing | Stripe, usage-based, `documents_processed` meter |
+| Billing | Stripe, one-time credit packs ($2.99 / 50 runs) |
 | AI | `@anthropic-ai/sdk`, `claude-sonnet-4-6`, structured outputs |
 | Pipeline state | Zustand `src/store/pipeline.ts` |
 | Server state | Supabase Realtime — **never TanStack Query polling** |
@@ -61,11 +61,19 @@ Auth gate uses `src/proxy.ts` (not `middleware.ts`) with `export function proxy`
 src/app/
   pipeline/         # Authenticated — main canvas
   login/            # Unauthenticated
+  billing/          # Authenticated — credit balance + buy more
   api/
     jobs/           # POST: create job + fire Edge Function via after()
     upload/presign/ # POST: Supabase Storage signed upload URLs
+    stripe/
+      webhook/      # POST: Stripe webhook — grants credits on checkout.session.completed
     google-drive/
-      token/        # GET: return stored google_access_token for current user
+      token/        # GET: refresh + return google_access_token for current user
+    gmail/          # Gmail API proxy routes
+    drive-watchers/ # GET: list watchers; POST: create/upsert watcher
+    drive-watchers/[id]/ # DELETE: remove watcher
+    cron/
+      drive-watch/  # GET: Vercel cron — polls Drive folders, fires jobs for new files
 ```
 
 ### Job flow
@@ -121,10 +129,26 @@ Key types: `StepType`, `DataShape`, `InstructionPayload`, `PipelineStep`, `STEP_
 
 - **Supabase client**: use `src/lib/supabase/` helpers only. Never raw `createClient` from `@supabase/supabase-js` in app code (service role exception: API routes only).
 - **Components**: server by default. `"use client"` only for event handlers, hooks, ReactFlow.
-- **Tailwind**: `var(--primary)` + `color-mix()` for opacity. No hardcoded hex in components.
+- **Tailwind**: use `blue-*` scale for brand. `var(--brand)` in CSS. No hardcoded hex in components. `bg-linear-to-b` not `bg-gradient-to-b` (Tailwind v4).
 - **shadcn**: `bunx shadcn add <component>`. Don't hand-roll.
 - **Errors**: Edge Function try/catch sets `jobs.status = "error"` + `error_message`. Surface via Realtime, not HTTP codes. Client-side errors use `sonner` toast.
-- **Google OAuth**: scopes `drive.readonly` + `spreadsheets` requested at sign-in. Token stored in `users.google_access_token`. `/api/google-drive/token` returns it.
+- **Google OAuth**: scopes `drive.readonly` + `spreadsheets` + `gmail.readonly` requested at sign-in. Token stored in `users.google_access_token`. `/api/google-drive/token` refreshes via `supabase.auth.refreshSession()` then returns the fresh token.
+- **Server actions with redirect**: wrap in `useTransition` + `startTransition` on the client — `redirect()` inside a server action throws and must not be called from a raw onClick.
+
+---
+
+## Billing model
+
+Credits-based, one-time purchase. No subscription.
+
+- `users.document_credits` — integer, decremented per job run
+- `users.stripe_customer_id` — stored after first purchase to reuse customer
+- **Buy**: `buyCredits()` server action → Stripe Checkout (`mode: "payment"`) → success redirect to `/billing?success=true`
+- **Webhook** (`/api/stripe/webhook`): only handles `checkout.session.completed` with `payment_status === "paid"` → calls `supabase.rpc("add_credits", { user_id, amount })`
+- **Job gate** (`/api/jobs`): when `BILLING_ENABLED=true`, calls `supabase.rpc("deduct_credit", { user_id })` — returns false if no credits → 402
+- **Billing page** (`/billing`): shows current credit balance + "Buy 50 runs for $2.99" button. Same blue gradient as login page.
+
+No meter events, no portal, no subscription status fields.
 
 ---
 
@@ -139,20 +163,14 @@ RESEND_API_KEY                 # edge only — email node
 FROM_EMAIL                     # edge only — email sender (optional, default noreply@mailroom.app)
 NEXT_PUBLIC_GOOGLE_API_KEY     # client — Google Picker (optional but recommended)
 NEXT_PUBLIC_APP_URL            # canonical app URL (e.g. https://mailroom.app) — Stripe redirects
-STRIPE_SECRET_KEY              # server/edge — Stripe API
+STRIPE_SECRET_KEY              # server — Stripe API
 STRIPE_WEBHOOK_SECRET          # server — webhook signature verification
-STRIPE_PRICE_ID                # server — Stripe price ID for the Pro plan
-STRIPE_METER_NAME              # edge — Stripe meter event name (default: documents_processed)
-BILLING_ENABLED                # server — set to "true" to enforce subscription gate on /api/jobs
+STRIPE_PRICE_ID                # server — Stripe one-time price ID (not a recurring price)
+BILLING_ENABLED                # server — set to "true" to enforce credit gate on /api/jobs
+GOOGLE_CLIENT_ID               # server — Google OAuth client ID (from Cloud Console)
+GOOGLE_CLIENT_SECRET           # server — Google OAuth client secret (from Cloud Console)
+CRON_SECRET                    # server — Vercel cron secret (set in Vercel project settings)
 ```
-
-### Billing flow
-1. User visits `/billing` → sees pricing card or current plan + usage
-2. "Start free trial" → `createCheckoutSession` server action → Stripe Checkout (14-day trial)
-3. Stripe webhook (`/api/stripe/webhook`) updates `users.stripe_subscription_status`
-4. `/api/jobs` checks `stripe_subscription_status` when `BILLING_ENABLED=true` (off by default for dev)
-5. Edge Function reports meter event to Stripe after each successful job
-6. "Manage billing" → `createPortalSession` server action → Stripe Portal
 
 ---
 
@@ -160,15 +178,15 @@ BILLING_ENABLED                # server — set to "true" to enforce subscriptio
 
 ### 1. Supabase migrations
 Migrations are applied to local DB via MCP. For a **separate production project**, run these manually in the Supabase SQL editor:
-- `supabase/migrations/20260413000000_add_stripe_fields.sql`
+- `supabase/migrations/20260413000000_add_stripe_fields.sql` — adds `stripe_customer_id`, `document_credits` to `users`; adds `add_credits` and `deduct_credit` RPC functions
 - The `saved_pipelines` table migration (check Supabase → Database → Migrations to confirm it exists)
 
 ### 2. Stripe setup (live mode)
 1. Create account → switch to **live mode**
-2. Products → create a Product → add a monthly Price → copy `price_xxx`
+2. Products → create a Product → add a **one-time** Price (not recurring) for $2.99 → copy `price_xxx`
 3. Developers → API keys → copy `sk_live_xxx`
 4. Webhooks → Add endpoint → URL: `https://yourdomain.com/api/stripe/webhook`
-   Events to select: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+   Events to select: `checkout.session.completed` (only this one needed)
    → copy `whsec_xxx`
 
 ### 3. Vercel env vars
@@ -191,16 +209,13 @@ NEXT_PUBLIC_GOOGLE_API_KEY      (Drive picker, optional)
 Also set in **Supabase → Edge Functions → Secrets**:
 ```
 ANTHROPIC_API_KEY
-STRIPE_SECRET_KEY
-STRIPE_METER_NAME=documents_processed
 RESEND_API_KEY
 FROM_EMAIL
 ```
 
-### 4. Known bugs to fix.
-- **Dropdown** The dropdown menu for output node's file type is to the side of the card away. its disconnected and makes u move the mouse to get to it
-- **Past-due gate** (`src/app/api/jobs/route.ts:31`): add `status !== "past_due"` to the billing gate condition so past-due users aren't immediately blocked while Stripe retries payment
-- **Usage reset date** (`src/app/billing/page.tsx:138`): broken date math — replace with `new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()`
+### 4. Known bugs to fix
+- **Dropdown** The dropdown menu for output node's file type is to the side of the card away. it's disconnected and makes u move the mouse to get to it
+- **Gmail API** Must be enabled in Google Cloud Console for the OAuth client project before Gmail node will work
 
 ### 5. Deploy
 ```bash
@@ -221,8 +236,17 @@ Test end-to-end with a real card in live mode before sharing.
 | Auth gate | `src/proxy.ts` |
 | Supabase helpers | `src/lib/supabase/` |
 | Google Drive utils | `src/lib/google-drive/picker.ts` |
+| Gmail utils | `src/lib/gmail/` |
+| Drive watcher API | `src/app/api/drive-watchers/` |
+| Drive watch cron | `src/app/api/cron/drive-watch/route.ts` |
+| Vercel cron config | `vercel.json` |
+| Logo | `public/logo.svg` |
 | Job API | `src/app/api/jobs/route.ts` |
 | Presign API | `src/app/api/upload/presign/route.ts` |
+| Stripe webhook | `src/app/api/stripe/webhook/route.ts` |
+| Gmail API routes | `src/app/api/gmail/` |
+| Billing page | `src/app/billing/page.tsx` |
+| Billing actions | `src/app/billing/actions.ts` |
 | Edge Function | `supabase/functions/process-job/index.ts` |
 | Edge handlers | `supabase/functions/process-job/handlers/` |
 | Global CSS | `src/app/globals.css` |
