@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/drive-watch",
-      "schedule": "0 9 * * *"
+      "schedule": "* * * * *"
     }
   ]
 }
