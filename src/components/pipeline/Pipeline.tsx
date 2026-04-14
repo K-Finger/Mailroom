@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, useTransition } from "react";
 import {
   ReactFlow,
   Background,
@@ -118,9 +118,9 @@ function getStepLabel(data: InstructionNodeData): string {
 // ---------------------------------------------------------------------------
 
 const SHAPE_TEXT: Record<DataShape, string> = {
-  files: "text-muted-foreground",
-  texts: "text-blue-600 dark:text-blue-400",
-  table: "text-primary",
+  files: "text-blue-600",
+  texts: "text-blue-600",
+  table: "text-blue-600",
 };
 
 const STEP_ICONS: Record<InstructionType, LucideIcon> = {
@@ -138,7 +138,7 @@ const STEP_ICONS: Record<InstructionType, LucideIcon> = {
 function ShapePill({ shape, error }: { shape: DataShape; error?: boolean }) {
   return (
     <span className={cn(
-      "inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[10px] font-medium",
+      "inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium",
       error ? "text-destructive" : SHAPE_TEXT[shape],
     )}>
       {shape}
@@ -246,8 +246,8 @@ function WorkflowPanel({
           return (
             <div key={entry.id}>
               {/* Connector */}
-              <div className="flex items-center gap-2 px-3 py-1.5">
-                <ArrowDown className="size-4 shrink-0 text-muted-foreground/40" />
+              <div className="flex items-center px-3 py-1.5">
+                <ArrowDown className="size-4 shrink-0 text-muted-foreground/40 mr-4" />
                 <ShapePill shape={entry.incomingShape} error={!!entry.error} />
               </div>
 
@@ -266,7 +266,7 @@ function WorkflowPanel({
               >
                 <Icon className={cn("size-5 shrink-0", entry.error ? "text-destructive" : "text-muted-foreground")} />
                 <span className="text-base truncate">{entry.label}</span>
-                {entry.error && <AlertCircle className="size-5 shrink-0 text-destructive ml-auto" />}
+                {entry.error && <AlertCircle className="size-5 shrink-0 text-destructive" />}
               </button>
             </div>
           );
@@ -596,6 +596,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
     setEdges(data.edges as PipelineEdge[]);
   }, [supabase, setNodes, setEdges]);
 
+  const [, startTransition] = useTransition();
   const busy = step === "uploading" || step === "processing";
   const sourceNode = nodes.find((n) => n.id === "source");
   const inputFiles = useMemo(
@@ -780,7 +781,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
       <div className="flex items-center border-b bg-card shrink-0">
         <div className="w-72 shrink-0 px-5 py-4 border-r flex items-center gap-2.5">
           <img src="/logo.svg" alt="" className="h-7 w-auto shrink-0" />
-          <h1 className="text-4xl font-bold tracking-tight text-brand">Mailroom</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-blue-700">Mailroom</h1>
         </div>
         <div className="flex items-center gap-3 px-5 py-4 flex-1">
           <InstructionPicker onSelect={addInstructionNode} disabled={busy} />
@@ -797,7 +798,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
                 <Wallet className="size-4" />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => signOut()}>
+              <DropdownMenuItem onClick={() => startTransition(() => signOut())}>
                 <LogOut className="size-4" />
                 Sign out
               </DropdownMenuItem>

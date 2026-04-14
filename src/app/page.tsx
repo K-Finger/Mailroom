@@ -171,7 +171,7 @@ export default function LandingPage() {
           <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg w-full max-w-3xl border border-blue-600">
             {/* Logo - left */}
             <a href="#hero" className="flex items-center gap-2 pl-1 shrink-0">
-              <Image src="/logo.svg" alt="" width={20} height={20} className="h-5 w-auto shrink-0" />
+              <Image src="/logo.svg" alt="" width={20} height={16} className="h-5 w-auto shrink-0" />
               <span className="text-xl font-bold text-blue-700 tracking-tight">Mailroom</span>
             </a>
             {/* Nav links - absolutely centered */}
