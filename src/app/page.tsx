@@ -162,7 +162,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ── HERO (blue) ─────────────────────────────────── */}
-      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-600 overflow-hidden pb-0">
+      <section className="relative bg-gradient-to-b from-blue-800 via-blue-600 to-blue-500 overflow-hidden pb-0">
         {/* subtle radial glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(255,255,255,0.12),transparent)] pointer-events-none" />
 
@@ -227,7 +227,8 @@ export default function LandingPage() {
         {/* App preview — sits at bottom of hero, slightly overlapping next section */}
         <div className="relative z-10 px-4 md:px-8 pb-0">
           <AppPreview />
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent to-white" />
+          <div className="pointer-events-none absolute inset-0 mt-80 bg-linear-to-b from-transparent to-white" />
+          <div className="pointer-events-none absolute inset-0 mt-90 bg-linear-to-b from-transparent to-white" />
         </div>
       </section>
 
