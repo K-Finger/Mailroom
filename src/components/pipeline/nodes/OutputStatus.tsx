@@ -15,7 +15,7 @@ import {
   type StepType,
 } from "@/store/pipeline";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 /** Walk backwards from nodeId to compute the shape arriving at it. */
 function useIncomingShape(nodeId: string): DataShape {
@@ -92,20 +92,23 @@ export function OutputStatus({ id }: { id: string }) {
       {step === "idle" && isTable && (
         <div className="flex items-center gap-2 w-full">
           <label className="text-xs text-muted-foreground shrink-0">File type</label>
-          <Select
-            value={tableFormat}
-            onValueChange={(val) =>
-              updateNodeData(id, { payload: { ...payload, tableFormat: val as "xlsx" | "csv" } })
-            }
-          >
-            <SelectTrigger size="sm" className="flex-1 text-xs h-7">
-              <SelectValue>{(v: string) => v.toUpperCase()}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="xlsx">XLSX</SelectItem>
-              <SelectItem value="csv">CSV</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex rounded-md border border-border overflow-hidden text-xs">
+            {(["xlsx", "csv"] as const).map((fmt) => (
+              <button
+                key={fmt}
+                type="button"
+                onClick={() => updateNodeData(id, { payload: { ...payload, tableFormat: fmt } })}
+                className={cn(
+                  "px-2.5 py-1 font-medium transition-colors",
+                  tableFormat === fmt
+                    ? "bg-blue-600 text-white"
+                    : "bg-background text-muted-foreground hover:bg-accent"
+                )}
+              >
+                {fmt.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
