@@ -36,7 +36,12 @@ export default async function LoginPage({
               {error}
             </p>
           )}
-          <GoogleSignInButton />
+          <div className="relative">
+            <GoogleSignInButton />
+            <p className="mt-2 text-xs text-center text-muted-foreground/70">
+              Google sign-in is temporarily suspended pending OAuth verification. Use email below.
+            </p>
+          </div>
           <div className="flex items-center gap-3 my-1">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-foreground">or</span>
