@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
 
 export default async function LoginPage({
   searchParams,
@@ -36,6 +37,12 @@ export default async function LoginPage({
             </p>
           )}
           <GoogleSignInButton />
+          <div className="flex items-center gap-3 my-1">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <EmailAuthForm />
         </CardContent>
       </Card>
     </div>
