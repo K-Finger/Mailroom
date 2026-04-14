@@ -33,7 +33,7 @@ Pipelines are saved and reusable. Drive and email listeners trigger pipelines au
 
 ## Why someone would pay for this today
 
-Manual document processing is already costing teams money. Mailroom delivers immediate, measurable time savings on a workflow every business has. It is priced at a one-time flat fee ($2.99) with no subscription
+Manual document processing is already costing teams money. Mailroom delivers immediate, measurable time savings on a workflow every business has. It is priced at a one-time flat fee for beta ($1.99) with no subscription. Following the Beta, Companies can use a pay-as-you go model to process documents for pennis each, offering way better pricing than competitors with additional features.
 
 ---
 
