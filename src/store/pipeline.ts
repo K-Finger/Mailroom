@@ -122,6 +122,8 @@ export type InstructionPayload =
 export interface SourceNodeData extends Record<string, unknown> {
   kind: "source";
   inputFiles: PipelineFile[];
+  watchFolderId?: string;
+  watchFolderName?: string;
 }
 
 export interface InstructionNodeData extends Record<string, unknown> {

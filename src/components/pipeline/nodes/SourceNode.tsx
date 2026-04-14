@@ -1,6 +1,6 @@
 "use client";
 
-import { X, FolderOpen, Mail, Loader2, Paperclip } from "lucide-react";
+import { X, FolderOpen, Mail, Loader2, Paperclip, Eye, EyeOff } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { toast } from "sonner";
@@ -26,10 +26,11 @@ import type { GmailMessage } from "@/lib/gmail/api";
 export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
   const { updateNodeData } = useReactFlow();
   const { step } = usePipelineStore();
-  const { inputFiles } = data as SourceNodeData;
+  const { inputFiles, watchFolderId, watchFolderName } = data as SourceNodeData;
   const busy = step === "uploading" || step === "processing";
   const files = inputFiles.map((f) => f.file);
   const [driveLoading, setDriveLoading] = useState(false);
+  const [watchLoading, setWatchLoading] = useState(false);
   const [gmailOpen, setGmailOpen] = useState(false);
   const [gmailLoading, setGmailLoading] = useState(false);
   const [gmailMessages, setGmailMessages] = useState<GmailMessage[]>([]);
@@ -84,6 +85,31 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
       setDriveLoading(false);
     }
   }, [files, handleChange]);
+
+  const handleWatchPick = useCallback(async () => {
+    setWatchLoading(true);
+    try {
+      const tokenRes = await fetch("/api/google-drive/token");
+      if (!tokenRes.ok) {
+        const { error } = await tokenRes.json() as { error: string };
+        throw new Error(error ?? "No Drive access");
+      }
+      const { token } = await tokenRes.json() as { token: string };
+      await loadPickerApi();
+      const folder = await openFolderPicker(token);
+      if (!folder) return;
+      updateNodeData(id, { watchFolderId: folder.id, watchFolderName: folder.name });
+      toast.success(`Watching "${folder.name}"`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to pick folder");
+    } finally {
+      setWatchLoading(false);
+    }
+  }, [id, updateNodeData]);
+
+  const handleClearWatch = useCallback(() => {
+    updateNodeData(id, { watchFolderId: undefined, watchFolderName: undefined });
+  }, [id, updateNodeData]);
 
   const handleGmailOpen = useCallback(async () => {
     setGmailOpen(true);
@@ -212,6 +238,26 @@ export function SourceNode({ id, data }: NodeProps<PipelineNode>) {
             <Mail className="size-3 shrink-0 text-brand" />
             Gmail Inbox
           </button>
+          {/* Watch folder */}
+          {watchFolderId ? (
+            <div className="mt-1 flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700">
+              <Eye className="size-3 shrink-0" />
+              <span className="flex-1 truncate font-medium">{watchFolderName}</span>
+              <button type="button" onClick={handleClearWatch} className="shrink-0 hover:text-blue-900">
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleWatchPick}
+              disabled={busy || watchLoading}
+              className="mt-1 w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-background px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {watchLoading ? <Loader2 className="size-3 animate-spin" /> : <Eye className="size-3 shrink-0" />}
+              {watchLoading ? "Picking..." : "Watch folder"}
+            </button>
+          )}
           <FileUploadList className="mt-2">
             {inputFiles.map((pf) => (
               <FileUploadItem key={pf.id} value={pf.file}>
