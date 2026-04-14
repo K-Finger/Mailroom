@@ -183,7 +183,10 @@ export default function LandingPage() {
         <nav className="fixed top-4 left-0 right-0 z-50 flex items-center justify-center px-6">
           <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg w-full max-w-3xl border border-blue-600">
             {/* Logo - left */}
-            <span className="text-xl font-bold text-blue-700 tracking-tight pl-1 shrink-0">MailRoom</span>
+            <div className="flex items-center gap-2 pl-1 shrink-0">
+              <img src="/logo.svg" alt="" className="h-5 w-auto shrink-0" />
+              <span className="text-xl font-bold text-blue-700 tracking-tight">Mailroom</span>
+            </div>
             {/* Nav links - absolutely centered */}
             <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1">
               {["Features", "How it works", "Pricing"].map((item) => (
