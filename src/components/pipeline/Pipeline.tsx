@@ -52,6 +52,7 @@ import { SourceNode } from "./nodes/SourceNode";
 import { InstructionNode } from "./nodes/InstructionNode";
 import { SpreadsheetViewer } from "./SpreadsheetViewer";
 import { TemplateEditor } from "./TemplateEditor";
+import { JobHistory } from "./JobHistory";
 
 const nodeTypes: NodeTypes = {
   sourceNode: SourceNode,
@@ -608,6 +609,7 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
   const [watchSaving, setWatchSaving] = useState(false);
   const [watchersOpen, setWatchersOpen] = useState(false);
   const [watchers, setWatchers] = useState<Array<{ id: string; folder_name: string; enabled: boolean; last_checked_at: string | null }>>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Toast once when a job transitions to error state
   const prevStep = useRef(step);
@@ -928,6 +930,14 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
             <Eye className="size-3.5" />
             Watchers
           </button>
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <BookOpen className="size-3.5" />
+            History
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none">
               {user?.email ?? "Account"}
@@ -1046,6 +1056,8 @@ export function Pipeline({ user, docsThisMonth }: { user: User | null; docsThisM
         </div>
         </div>
       </div>
+
+      <JobHistory open={historyOpen} onOpenChange={setHistoryOpen} />
 
       {/* Watchers dialog */}
       <Dialog open={watchersOpen} onOpenChange={setWatchersOpen}>
